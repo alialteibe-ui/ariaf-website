@@ -220,6 +220,18 @@ export function MenuIcon({ className = "w-6 h-6" }: IconProps) {
   );
 }
 
+export function PalmIcon({ className = "w-6 h-6" }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22V11" />
+      <path d="M12 11C12 11 8 9 6 5c3 0 5.5 1.5 6 6z" />
+      <path d="M12 11C12 11 16 9 18 5c-3 0-5.5 1.5-6 6z" />
+      <path d="M12 11C12 11 10 7 12 3c2 4 0 8 0 8z" />
+      <path d="M9 22h6" />
+    </svg>
+  );
+}
+
 // ─── Farm / Destination icons ─────────────────────────────────────────────────
 
 export function CoffeeIcon({ className = "w-6 h-6" }: IconProps) {

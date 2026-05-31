@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { WHATSAPP_URL, WHATSAPP_GREETING, heroImages } from "@/lib/site";
+import { HomeIcon, DropletIcon, PalmIcon } from "@/components/icons";
 
 export default function Hero() {
   const scrollToBooking = () => {
@@ -28,8 +29,10 @@ export default function Hero() {
         className="object-cover object-center"
       />
 
-      {/* Warm dark overlay for text readability */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[rgba(20,12,5,0.55)] via-[rgba(20,12,5,0.40)] to-[rgba(20,12,5,0.65)]" />
+      {/* Mobile overlay — lighter for image clarity */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[rgba(20,12,5,0.32)] via-[rgba(20,12,5,0.22)] to-[rgba(20,12,5,0.48)] sm:hidden" />
+      {/* Desktop overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[rgba(20,12,5,0.55)] via-[rgba(20,12,5,0.40)] to-[rgba(20,12,5,0.65)] hidden sm:block" />
 
       {/* Subtle warm vignette on sides */}
       <div className="absolute inset-0 bg-gradient-to-r from-[rgba(20,12,5,0.30)] via-transparent to-transparent" />
@@ -38,7 +41,7 @@ export default function Hero() {
       <div className="absolute right-16 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-[rgba(212,181,90,0.35)] to-transparent hidden lg:block" />
 
       {/* Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-10 pt-32 pb-20">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-10 pt-32 pb-10">
         <div className="max-w-3xl">
 
           {/* Location badge */}
@@ -82,18 +85,10 @@ export default function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.35 }}
-            className="text-xl sm:text-2xl text-white/85 font-light leading-relaxed mb-3 max-w-2xl"
+            className="text-base sm:text-xl text-white/85 font-light leading-relaxed mb-12 max-w-xl"
           >
-            شاليهات خاصة بمياه كبريتية طبيعية
-          </motion.p>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.45 }}
-            className="text-base text-white/70 leading-relaxed mb-12 max-w-xl"
-          >
-            استمتع بخصوصية تامة وسط أجواء الأحساء الهادئة — مياه طبيعية،
-            هواء نقي، وأوقات لا تُنسى مع العائلة.
+            استمتع بتجربة استجمام خاصة وسط نخيل الأحساء، مع مياه كبريتية
+            طبيعية وأجواء هادئة تمنح عائلتك يومًا مختلفًا.
           </motion.p>
 
           {/* CTAs */}
@@ -120,47 +115,46 @@ export default function Hero() {
             </button>
           </motion.div>
 
-          {/* Stats */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.7 }}
-            className="flex items-center gap-8 mt-16 pt-8 border-t border-white/15"
-          >
-            <Stat number="١٠" label="شاليهات فاخرة" />
-            <div className="w-px h-10 bg-white/20" />
-            <Stat number="١٠٠٪" label="خصوصية تامة" />
-            <div className="w-px h-10 bg-white/20" />
-            <Stat number="طبيعية" label="مياه كبريتية" />
-          </motion.div>
         </div>
       </div>
 
-      {/* Scroll indicator */}
+      {/* ── Stat bar — anchored to bottom of hero ───────────────────────────── */}
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.2, duration: 0.6 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden sm:flex flex-col items-center gap-2"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.75 }}
+        className="absolute bottom-0 left-0 right-0 z-10 px-4 sm:px-8 lg:px-12 pb-5 sm:pb-10"
       >
-        <span className="text-xs text-white/50 font-medium">مرر للأسفل</span>
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-          className="w-5 h-8 border border-white/30 rounded-full flex justify-center pt-1.5"
-        >
-          <div className="w-1 h-2 bg-gold-400 rounded-full" />
-        </motion.div>
+        <div className="flex items-stretch bg-[rgba(10,6,2,0.50)] backdrop-blur-md border border-gold-300/20 rounded-2xl overflow-hidden max-w-lg lg:max-w-xl">
+          <Stat Icon={HomeIcon}    title="شاليهات خاصة"  desc="خصوصية وراحة لعائلتك"  />
+          <div className="w-px bg-white/15 my-3 sm:my-4 flex-shrink-0" />
+          <Stat Icon={DropletIcon} title="مياه كبريتية"  desc="تجربة طبيعية هادئة"     />
+          <div className="w-px bg-white/15 my-3 sm:my-4 flex-shrink-0" />
+          <Stat Icon={PalmIcon}    title="وسط النخيل"    desc="أجواء أحسائية أصيلة"   />
+        </div>
       </motion.div>
     </section>
   );
 }
 
-function Stat({ number, label }: { number: string; label: string }) {
+function Stat({
+  Icon,
+  title,
+  desc,
+}: {
+  Icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  desc: string;
+}) {
   return (
-    <div className="text-center">
-      <div className="font-serif text-2xl text-gold-300 font-bold drop-shadow">{number}</div>
-      <div className="text-xs text-white/60 mt-0.5">{label}</div>
+    <div className="flex-1 flex flex-col items-center gap-1.5 py-3.5 sm:py-4 px-3 sm:px-5">
+      <Icon className="w-5 h-5 sm:w-[18px] sm:h-[18px] text-gold-300" />
+      <span className="font-serif text-xs sm:text-sm text-gold-100 font-semibold leading-tight text-center">
+        {title}
+      </span>
+      <span className="text-[10px] sm:text-xs text-white/60 leading-tight text-center">
+        {desc}
+      </span>
     </div>
   );
 }

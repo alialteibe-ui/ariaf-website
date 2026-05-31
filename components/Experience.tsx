@@ -59,7 +59,7 @@ const cardVariants = {
 
 export default function Experience() {
   return (
-    <section id="experience" className="py-14 lg:py-28 bg-ivory">
+    <section id="experience" className="py-10 lg:py-28 bg-ivory">
       <div className="max-w-7xl mx-auto px-6 lg:px-10">
         {/* Header */}
         <motion.div
@@ -67,7 +67,7 @@ export default function Experience() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.55 }}
-          className="text-center mb-10 lg:mb-20"
+          className="text-center mb-7 lg:mb-20"
         >
           <p className="text-gold-400 text-sm font-semibold tracking-widest uppercase mb-4">
             لماذا أرياف زكي السالم
@@ -88,21 +88,21 @@ export default function Experience() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-50px" }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6"
         >
           {benefits.map(({ Icon, title, desc }, i) => (
             <motion.div
               key={i}
               variants={cardVariants}
-              className="group bg-white rounded-2xl p-8 border border-sand-100 hover:border-gold-300/40 shadow-[0_2px_20px_rgba(61,43,31,0.04)] hover:shadow-[0_8px_36px_rgba(61,43,31,0.08)] hover:-translate-y-0.5 transition-all duration-350"
+              className="group bg-white rounded-2xl p-4 sm:p-8 border border-sand-100 hover:border-gold-300/40 shadow-[0_2px_20px_rgba(61,43,31,0.04)] hover:shadow-[0_8px_36px_rgba(61,43,31,0.08)] hover:-translate-y-0.5 transition-all duration-350"
             >
-              <div className="w-11 h-11 rounded-xl bg-sand-50 border border-sand-100 flex items-center justify-center mb-6 group-hover:bg-gold-300/10 group-hover:border-gold-300/30 transition-colors duration-300">
-                <Icon className="w-5 h-5 text-gold-500" />
+              <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl bg-sand-50 border border-sand-100 flex items-center justify-center mb-3 sm:mb-6 group-hover:bg-gold-300/10 group-hover:border-gold-300/30 transition-colors duration-300">
+                <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-gold-500" />
               </div>
-              <h3 className="font-semibold text-lg text-charcoal mb-3 leading-snug">
+              <h3 className="font-semibold text-sm sm:text-lg text-charcoal mb-1.5 sm:mb-3 leading-snug">
                 {title}
               </h3>
-              <p className="text-brown-400 leading-relaxed text-sm">{desc}</p>
+              <p className="text-brown-400 leading-relaxed text-xs sm:text-sm">{desc}</p>
             </motion.div>
           ))}
         </motion.div>

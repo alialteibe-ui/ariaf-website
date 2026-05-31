@@ -82,12 +82,11 @@ export default function Home() {
       <Navbar />
       <main>
         <Hero />
-        <VideoSection />
         <Experience />
-        <ChaletTypes />
-        <SulfurSection />
+        <VideoSection />
         <FarmSection />
         <Gallery />
+        <ChaletTypes />
         <BookingSteps />
         <BookingForm />
         <FAQ />

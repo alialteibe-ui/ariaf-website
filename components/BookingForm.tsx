@@ -2,8 +2,8 @@
 
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { WHATSAPP_URL, WHATSAPP_NUMBER } from "@/lib/site";
-import { WhatsAppIcon, ShieldIcon, ClockIcon, MapPinIcon, CalendarIcon } from "@/components/icons";
+import { WHATSAPP_URL } from "@/lib/site";
+import { WhatsAppIcon, CalendarIcon } from "@/components/icons";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -73,6 +73,38 @@ const CHALETS: ChaletOption[] = [
   },
 ];
 
+const GUESTS_OPTIONS: Record<string, string[]> = {
+  mini: [
+    "١ — ٣ أفراد",
+    "٣ — ٥ أفراد",
+  ],
+  small: [
+    "١ — ٣ أفراد",
+    "٣ — ٥ أفراد",
+    "٦ — ٨ أفراد",
+  ],
+  medium: [
+    "١ — ٣ أفراد",
+    "٣ — ٥ أفراد",
+    "٦ — ٨ أفراد",
+    "٩ — ١٢ فردًا",
+  ],
+  dome105: [
+    "١ — ٣ أفراد",
+    "٣ — ٥ أفراد",
+    "٦ — ٨ أفراد",
+    "٩ — ١٢ فردًا",
+    "١٣ — ٢٠ فردًا",
+  ],
+  vip115: [
+    "١ — ٣ أفراد",
+    "٣ — ٥ أفراد",
+    "٦ — ٨ أفراد",
+    "٩ — ١٢ فردًا",
+    "١٣ — ٢٠ فردًا",
+  ],
+};
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatDate(raw: string): string {
@@ -111,18 +143,18 @@ const INITIAL: FormState = {
   notes:     "",
 };
 
-const DIRECT_WA_MSG =
-  "مرحباً، أرغب بحجز شاليه في أرياف زكي السالم للمياه الكبريتية. أرجو تزويدي بالتوفر والأسعار.";
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function BookingForm() {
   const [form, setForm] = useState<FormState>(INITIAL);
+  const [guestsError, setGuestsError] = useState(false);
   const dateRef = useRef<HTMLInputElement>(null);
 
   const chalet         = CHALETS.find((c) => c.id === form.chaletId) ?? null;
   const isMini         = chalet?.isMini ?? false;
   const estimatedPrice = chalet?.periods.find((p) => p.label === form.period)?.price ?? null;
+  const guestOptions   = form.chaletId ? (GUESTS_OPTIONS[form.chaletId] ?? []) : [];
 
   const openDatePicker = () => {
     const input = dateRef.current;
@@ -138,8 +170,17 @@ export default function BookingForm() {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
+    if (name === "guests") setGuestsError(false);
     setForm((prev) => {
-      if (name === "chaletId") return { ...prev, chaletId: value, period: "" };
+      if (name === "chaletId") {
+        const validOptions = GUESTS_OPTIONS[value] ?? [];
+        return {
+          ...prev,
+          chaletId: value,
+          period: "",
+          guests: validOptions.includes(prev.guests) ? prev.guests : "",
+        };
+      }
       return { ...prev, [name]: value };
     });
   };
@@ -193,6 +234,10 @@ export default function BookingForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.guests) {
+      setGuestsError(true);
+      return;
+    }
     window.open(`${WHATSAPP_URL}?text=${encodeURIComponent(buildMessage())}`, "_blank");
   };
 
@@ -201,67 +246,37 @@ export default function BookingForm() {
   const labelClass = "block text-sm font-semibold text-charcoal mb-2";
 
   return (
-    <section id="booking" className="py-14 lg:py-28 bg-ivory">
-      <div className="max-w-6xl mx-auto px-6 lg:px-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-start">
+    <section id="booking" className="py-12 lg:py-24 bg-ivory">
+      <div className="max-w-2xl mx-auto px-5 lg:px-6">
 
-          {/* ── Left panel ─────────────────────────────────────── */}
+        {/* Section header */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-7"
+        >
+          <p className="text-gold-400 text-xs font-semibold tracking-widest uppercase mb-2">
+            احجز الآن
+          </p>
+          <h2 className="font-serif text-3xl lg:text-4xl text-charcoal mb-2">
+            أرسل طلب حجزك
+          </h2>
+          <span className="gold-divider mx-auto mb-3" style={{ display: "block" }} />
+          <p className="text-brown-400 text-sm leading-relaxed">
+            أكمل البيانات وسيُفتح واتساب برسالة جاهزة — ما عليك إلا الإرسال.
+          </p>
+        </motion.div>
+
+          {/* ── Form ──────────────────────────────── */}
           <motion.div
-            initial={{ opacity: 0, x: 24 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.55 }}
           >
-            <p className="text-gold-400 text-sm font-semibold tracking-widest uppercase mb-4">
-              احجز الآن
-            </p>
-            <h2 className="font-serif text-4xl lg:text-5xl text-charcoal leading-tight mb-5">
-              ابدأ تجربتك
-              <br />
-              <span className="text-gold-500">معنا اليوم</span>
-            </h2>
-            <span className="gold-divider mb-8" style={{ display: "block" }} />
-            <p className="text-brown-400 text-base leading-relaxed mb-10">
-              أكمل البيانات أدناه وسيُفتح واتساب تلقائياً برسالة جاهزة —
-              ما عليك إلا الإرسال وسنرد عليك بأقرب وقت.
-            </p>
-
-            <div className="space-y-4">
-              <InfoItem Icon={WhatsAppIcon} label="تواصل مباشر عبر واتساب" />
-              <InfoItem Icon={ClockIcon}    label="رد سريع خلال ساعات العمل" />
-              <InfoItem Icon={ShieldIcon}   label="حجزك محفوظ وخاص تماماً" />
-              <InfoItem Icon={MapPinIcon}   label="الأحساء، المملكة العربية السعودية" />
-            </div>
-
-            <div className="mt-10 p-5 bg-palm-600/5 border border-palm-500/15 rounded-2xl">
-              <p className="text-xs text-brown-400 mb-3 font-medium">
-                أو تواصل مباشرةً دون ملء النموذج:
-              </p>
-              <a
-                href={`${WHATSAPP_URL}?text=${encodeURIComponent(DIRECT_WA_MSG)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-3 group"
-              >
-                <div className="w-10 h-10 bg-palm-600 group-hover:bg-palm-500 rounded-xl flex items-center justify-center transition-colors duration-200">
-                  <WhatsAppIcon className="w-4 h-4 text-white" />
-                </div>
-                <div>
-                  <div className="text-sm font-bold text-charcoal">واتساب</div>
-                  <div className="text-xs text-brown-400">+{WHATSAPP_NUMBER}</div>
-                </div>
-              </a>
-            </div>
-          </motion.div>
-
-          {/* ── Right panel — form ──────────────────────────────── */}
-          <motion.div
-            initial={{ opacity: 0, x: -24 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <div className="bg-white rounded-3xl shadow-[0_8px_50px_rgba(61,43,31,0.07)] border border-sand-100 p-8 lg:p-10">
+            <div className="bg-white rounded-3xl shadow-[0_8px_50px_rgba(61,43,31,0.07)] border border-sand-100 p-7 lg:p-10">
               <h3 className="font-semibold text-charcoal text-lg mb-1">
                 {isMini ? "استفسر عن شاليهات الميني" : "أرسل طلب حجزك"}
               </h3>
@@ -394,15 +409,19 @@ export default function BookingForm() {
                     name="guests"
                     value={form.guests}
                     onChange={handleChange}
-                    className={inputClass}
+                    disabled={!chalet}
+                    className={`${inputClass} disabled:opacity-50 disabled:cursor-not-allowed${guestsError ? " border-red-400 ring-2 ring-red-200/50" : ""}`}
                   >
-                    <option value="">اختر العدد</option>
-                    <option value="١ — ٢ أفراد">١ — ٢ أفراد</option>
-                    <option value="٣ — ٥ أفراد">٣ — ٥ أفراد</option>
-                    <option value="٦ — ٨ أفراد">٦ — ٨ أفراد</option>
-                    <option value="٩ — ١٢ فرداً">٩ — ١٢ فرداً</option>
-                    <option value="١٣ — ٢٠ فرداً">١٣ — ٢٠ فرداً</option>
+                    <option value="">
+                      {chalet ? "اختر العدد" : "اختر نوع الشاليه أولاً"}
+                    </option>
+                    {guestOptions.map((opt) => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
                   </select>
+                  {guestsError && (
+                    <p className="text-xs text-red-500 mt-1.5">يرجى اختيار عدد الأشخاص قبل الإرسال</p>
+                  )}
                 </div>
 
                 {/* ملاحظات */}
@@ -437,27 +456,7 @@ export default function BookingForm() {
             </div>
           </motion.div>
 
-        </div>
       </div>
     </section>
-  );
-}
-
-// ─── InfoItem ─────────────────────────────────────────────────────────────────
-
-function InfoItem({
-  Icon,
-  label,
-}: {
-  Icon: React.ComponentType<{ className?: string }>;
-  label: string;
-}) {
-  return (
-    <div className="flex items-center gap-3">
-      <div className="w-8 h-8 rounded-lg bg-sand-100 flex items-center justify-center flex-shrink-0">
-        <Icon className="w-4 h-4 text-gold-500" />
-      </div>
-      <span className="text-charcoal text-sm">{label}</span>
-    </div>
   );
 }
