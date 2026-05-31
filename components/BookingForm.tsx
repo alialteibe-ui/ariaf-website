@@ -162,8 +162,13 @@ export default function BookingForm() {
   const openDatePicker = () => {
     const input = dateRef.current;
     if (!input) return;
+    input.focus();
     if (typeof (input as HTMLInputElement & { showPicker?: () => void }).showPicker === "function") {
-      (input as HTMLInputElement & { showPicker: () => void }).showPicker();
+      try {
+        (input as HTMLInputElement & { showPicker: () => void }).showPicker();
+      } catch {
+        input.click();
+      }
     } else {
       input.click();
     }
@@ -370,17 +375,20 @@ export default function BookingForm() {
                   <label className={labelClass}>
                     {isMini ? "تاريخ الزيارة" : "تاريخ الوصول"}
                   </label>
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={openDatePicker}
-                      className={`${inputClass} flex items-center justify-between gap-2 cursor-pointer`}
-                    >
+                  <div
+                    className="relative cursor-pointer"
+                    onClick={openDatePicker}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === "Enter" && openDatePicker()}
+                    aria-label={isMini ? "اختر تاريخ الزيارة" : "اختر تاريخ الوصول"}
+                  >
+                    <div className={`${inputClass} flex items-center justify-between gap-2 pointer-events-none`}>
                       <span className={form.date ? "text-charcoal" : "text-brown-400/50"}>
                         {form.date ? formatDate(form.date) : "اختر تاريخ الوصول"}
                       </span>
-                      <CalendarIcon className="w-4 h-4 text-brown-400/40 flex-shrink-0" />
-                    </button>
+                      <CalendarIcon className="w-4 h-4 text-brown-400/40 flex-shrink-0 pointer-events-none" />
+                    </div>
                     <input
                       ref={dateRef}
                       type="date"
@@ -390,7 +398,7 @@ export default function BookingForm() {
                       min={new Date().toISOString().split("T")[0]}
                       tabIndex={-1}
                       aria-hidden="true"
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
                     />
                   </div>
                 </div>
@@ -488,10 +496,8 @@ export default function BookingForm() {
                   )}
                 </button>
 
-                <p className="text-center text-xs text-brown-400/55 pt-1">
-                  {isMini
-                    ? "سيُفتح واتساب برسالة استفسار جاهزة للإرسال"
-                    : "سيُفتح واتساب تلقائياً مع تفاصيل حجزك جاهزة للإرسال"}
+                <p className="text-center text-xs text-brown-400/70 leading-relaxed pt-1 max-w-xs mx-auto">
+                  بعد الضغط على الزر سيتم فتح واتساب برسالة جاهزة، فضلاً اضغط إرسال داخل واتساب لإتمام طلب الحجز.
                 </p>
 
               </form>
