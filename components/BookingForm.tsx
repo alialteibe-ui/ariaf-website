@@ -144,11 +144,14 @@ const INITIAL: FormState = {
 };
 
 
+const N8N_WEBHOOK = "https://n8n.srv1620367.hstgr.cloud/webhook/ariaf-booking-request";
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function BookingForm() {
   const [form, setForm] = useState<FormState>(INITIAL);
   const [guestsError, setGuestsError] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const dateRef = useRef<HTMLInputElement>(null);
 
   const chalet         = CHALETS.find((c) => c.id === form.chaletId) ?? null;
@@ -232,13 +235,39 @@ export default function BookingForm() {
       .trim();
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.guests) {
       setGuestsError(true);
       return;
     }
-    window.open(`${WHATSAPP_URL}?text=${encodeURIComponent(buildMessage())}`, "_blank");
+
+    setIsSubmitting(true);
+
+    const payload = {
+      orderId:         `AR-${Date.now()}`,
+      fullName:        form.fullName,
+      phone:           form.phone,
+      chaletType:      chalet?.label ?? form.chaletId,
+      arrivalDate:     form.date,
+      bookingDuration: form.period,
+      guests:          form.guests,
+      estimatedPrice:  estimatedPrice ?? 0,
+      customerNotes:   form.notes,
+    };
+
+    try {
+      await fetch(N8N_WEBHOOK, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify(payload),
+      });
+    } catch {
+      // silent — never block the customer journey
+    } finally {
+      setIsSubmitting(false);
+      window.open(`${WHATSAPP_URL}?text=${encodeURIComponent(buildMessage())}`, "_blank");
+    }
   };
 
   const inputClass =
@@ -440,10 +469,23 @@ export default function BookingForm() {
                 {/* زر الإرسال */}
                 <button
                   type="submit"
-                  className="w-full flex items-center justify-center gap-3 bg-palm-600 hover:bg-palm-500 text-white font-bold text-base py-4 rounded-2xl shadow-[0_4px_20px_rgba(74,103,65,0.25)] hover:shadow-[0_6px_30px_rgba(74,103,65,0.35)] transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 mt-2"
+                  disabled={isSubmitting}
+                  className="w-full flex items-center justify-center gap-3 bg-palm-600 hover:bg-palm-500 disabled:opacity-70 disabled:cursor-not-allowed text-white font-bold text-base py-4 rounded-2xl shadow-[0_4px_20px_rgba(74,103,65,0.25)] hover:shadow-[0_6px_30px_rgba(74,103,65,0.35)] transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 mt-2"
                 >
-                  <WhatsAppIcon className="w-[18px] h-[18px] text-white" />
-                  {isMini ? "استفسر عبر واتساب" : "أرسل طلب الحجز عبر واتساب"}
+                  {isSubmitting ? (
+                    <>
+                      <svg className="w-4 h-4 animate-spin text-white" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                      </svg>
+                      جاري الإرسال...
+                    </>
+                  ) : (
+                    <>
+                      <WhatsAppIcon className="w-[18px] h-[18px] text-white" />
+                      {isMini ? "استفسر عبر واتساب" : "أرسل طلب الحجز عبر واتساب"}
+                    </>
+                  )}
                 </button>
 
                 <p className="text-center text-xs text-brown-400/55 pt-1">
