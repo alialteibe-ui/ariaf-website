@@ -56,38 +56,47 @@ export default function VideoSection() {
             {/* 9:16 aspect ratio for Shorts */}
             <div className="relative" style={{ paddingBottom: "177.78%" }}>
               {!playing ? (
-                /* Poster / play button overlay */
-                <div className="absolute inset-0">
+                /* Thumbnail + play overlay */
+                <button
+                  onClick={() => setPlaying(true)}
+                  aria-label="تشغيل الفيديو"
+                  className="absolute inset-0 w-full h-full group text-right"
+                >
+                  {/* Custom thumbnail */}
                   <Image
-                    src={videoSection.poster}
-                    alt="شاهد تجربة أرياف زكي السالم"
+                    src="/image/chalets/video-thumbnail.jpg"
+                    alt="شاهد تجربة المياه الكبريتية في أرياف زكي السالم"
                     fill
                     sizes="(max-width: 640px) 100vw, 384px"
                     className="object-cover object-center"
                   />
-                  {/* Dark overlay */}
-                  <div className="absolute inset-0 bg-black/40" />
 
-                  {/* Play button */}
-                  <button
-                    onClick={() => setPlaying(true)}
-                    aria-label="تشغيل الفيديو"
-                    className="absolute inset-0 flex flex-col items-center justify-center gap-4 group"
-                  >
-                    <div className="w-20 h-20 rounded-full bg-white/15 backdrop-blur-sm border border-white/30 flex items-center justify-center group-hover:bg-white/25 group-hover:scale-110 transition-all duration-300 shadow-lg">
+                  {/* Dark overlay — stronger at bottom for text legibility */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/20 to-black/70" />
+
+                  {/* Play button — centered */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-20 h-20 rounded-full bg-white/15 backdrop-blur-sm border border-white/35 flex items-center justify-center group-hover:bg-white/28 group-hover:scale-110 transition-all duration-300 shadow-xl">
                       <svg
-                        className="w-8 h-8 text-white translate-x-0.5"
+                        className="w-9 h-9 text-white translate-x-0.5"
                         fill="currentColor"
                         viewBox="0 0 24 24"
                       >
                         <path d="M8 5v14l11-7z" />
                       </svg>
                     </div>
-                    <span className="text-white/80 text-sm font-medium">
-                      تشغيل الفيديو
-                    </span>
-                  </button>
-                </div>
+                  </div>
+
+                  {/* Title + description — bottom of card */}
+                  <div className="absolute bottom-0 right-0 left-0 px-5 pb-6 pt-10 bg-gradient-to-t from-black/70 to-transparent">
+                    <p className="font-serif text-base text-gold-300 font-semibold leading-snug mb-1">
+                      شاهد تجربة المياه الكبريتية
+                    </p>
+                    <p className="text-white/70 text-xs leading-relaxed">
+                      جولة سريعة داخل أرياف زكي السالم
+                    </p>
+                  </div>
+                </button>
               ) : (
                 /* Actual YouTube embed — only loads when user clicks play */
                 <iframe
