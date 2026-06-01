@@ -109,4 +109,5 @@ export const galleryImages: Array<{
   { src: `${BASE}/exterior-02.jpg`,       alt: "انعكاس الشاليه في الماء",         category: "exterior", quality: "pro"   },
   { src: `${BASE}/bedroom-01.jpg`,        alt: "غرفة النوم",                       category: "interior", quality: "phone" },
   { src: `${BASE}/water-04.jpg`,          alt: "المياه الكبريتية الطبيعية",       category: "water",    quality: "phone" },
+  { src: `${BASE}/outdoor-seating-01.jpg`,alt: "جلسة الاسترخاء الخارجية",        category: "outdoor",  quality: "pro"   },
 ];

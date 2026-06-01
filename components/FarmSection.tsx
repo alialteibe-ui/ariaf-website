@@ -6,15 +6,15 @@ import { WHATSAPP_URL, WHATSAPP_GREETING } from "@/lib/site";
 import { WhatsAppIcon } from "@/components/icons";
 
 const photos = [
-  { src: "/image/farm/farm-crowd-01.jpg",    label: "حركة وزوار",      hero: true  },
-  { src: "/image/farm/farm-crowd-02.jpg",    label: "أجواء المزرعة"             },
-  { src: "/image/farm/farm-water.jpg",       label: "المياه الكبريتية"          },
-  { src: "/image/farm/farm-green-area.jpg",  label: "مساحات خضراء"             },
-  { src: "/image/farm/farm-cafe.jpg",        label: "مطاعم وكافيهات"           },
-  { src: "/image/farm/farm-shops.jpg",       label: "محلات تجارية"             },
-  { src: "/image/farm/farm-kids-play.jpg",   label: "ألعاب أطفال"              },
-  { src: "/image/farm/farm-overview.jpg",    label: "إطلالة عامة"              },
-  { src: "/image/farm/farm-family-walk.jpg", label: "زيارة عائلية"             },
+  { src: "/image/farm/farm-crowd-01.png",    label: "حركة وزوار",      hero: true  },
+  { src: "/image/farm/farm-crowd-02.png",    label: "أجواء المزرعة"             },
+  { src: "/image/farm/farm-water.png",       label: "المياه الكبريتية"          },
+  { src: "/image/farm/farm-green-area.png",  label: "مساحات خضراء"             },
+  { src: "/image/farm/farm-green-area1.png", label: "الحديقة الخضراء"           },
+  { src: "/image/farm/farm-green-area2.png", label: "إطلالة عامة"              },
+  { src: "/image/farm/farm-kids-play.png",   label: "ألعاب أطفال"              },
+  { src: "/image/farm/farm-kids-play2.png",  label: "مساحة الأطفال"            },
+  { src: "/image/farm/farm-family-walk.png", label: "زيارة عائلية"             },
 ];
 
 export default function FarmSection() {

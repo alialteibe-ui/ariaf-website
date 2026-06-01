@@ -4,7 +4,10 @@ const nextConfig: NextConfig = {
   images: {
     // All images are local (public/image/chalets/) — no remote domains needed.
     // localPatterns allows next/image to optimize them.
-    localPatterns: [{ pathname: "/image/chalets/**" }],
+    localPatterns: [
+      { pathname: "/image/chalets/**" },
+      { pathname: "/image/farm/**" },
+    ],
   },
 };
 

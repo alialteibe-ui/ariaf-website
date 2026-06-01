@@ -84,8 +84,8 @@ export default function Home() {
         <Hero />
         <Experience />
         <VideoSection />
-        <FarmSection />
         <Gallery />
+        <FarmSection />
         <ChaletTypes />
         <BookingSteps />
         <BookingForm />
