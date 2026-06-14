@@ -8,7 +8,7 @@ import {
   useSpring,
   useReducedMotion,
 } from "framer-motion";
-import { WHATSAPP_URL, WHATSAPP_GREETING, heroImages } from "@/lib/site";
+import { heroImages } from "@/lib/site";
 import { HomeIcon, DropletIcon, PalmIcon } from "@/components/icons";
 
 export default function Hero() {
@@ -35,6 +35,10 @@ export default function Hero() {
     window.addEventListener("mousemove", onMove);
     return () => window.removeEventListener("mousemove", onMove);
   }, [mx, my, prefersReducedMotion]);
+
+  const scrollToBooking = () => {
+    document.querySelector("#booking")?.scrollIntoView({ behavior: "smooth" });
+  };
 
   const scrollToExperience = () => {
     document.querySelector("#experience")?.scrollIntoView({ behavior: "smooth" });
@@ -133,15 +137,13 @@ export default function Hero() {
             transition={{ duration: 0.6, delay: 0.55 }}
             className="flex flex-col sm:flex-row gap-4"
           >
-            <a
-              href={`${WHATSAPP_URL}?text=${WHATSAPP_GREETING}`}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={scrollToBooking}
               className="inline-flex items-center justify-center gap-3 bg-palm-600 hover:bg-palm-500 text-white font-bold text-base px-8 py-4 rounded-2xl shadow-lg shadow-black/30 hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5"
             >
               <WhatsAppIcon />
               احجز شاليهك الآن
-            </a>
+            </button>
             <button
               onClick={scrollToExperience}
               className="liquid-glass inline-flex items-center justify-center gap-2 bg-white/5 text-white hover:bg-white/15 font-semibold text-base px-8 py-4 rounded-2xl transition-all duration-300"
