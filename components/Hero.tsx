@@ -47,7 +47,7 @@ export default function Hero() {
   return (
     <section
       id="home"
-      className="relative min-h-[100dvh] flex flex-col justify-center overflow-hidden"
+      className="relative min-h-[100dvh] flex flex-col sm:justify-center overflow-hidden"
     >
       {/* Background image — scaled past the edges so the parallax drift never
           reveals them; settles from a deeper zoom on first paint */}
@@ -80,7 +80,7 @@ export default function Hero() {
       <div className="absolute right-16 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-[rgba(212,181,90,0.35)] to-transparent hidden lg:block" />
 
       {/* Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-10 pt-32 pb-10">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-10 pt-32 pb-5 sm:pb-10">
         <div className="max-w-3xl">
 
           {/* Location badge */}
@@ -160,7 +160,7 @@ export default function Hero() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.75 }}
-        className="absolute bottom-0 left-0 right-0 z-10 px-4 sm:px-8 lg:px-12 pb-5 sm:pb-10"
+        className="relative sm:absolute sm:bottom-0 sm:left-0 sm:right-0 z-10 px-4 sm:px-8 lg:px-12 pb-5 sm:pb-10"
       >
         <div className="liquid-glass flex items-stretch bg-[rgba(10,6,2,0.42)] rounded-2xl max-w-lg lg:max-w-xl">
           <Stat Icon={HomeIcon}    title="شاليهات خاصة"  desc="خصوصية وراحة لعائلتك"  />
@@ -184,12 +184,18 @@ function Stat({
   desc: string;
 }) {
   return (
-    <div className="flex-1 flex flex-col items-center gap-1.5 py-3.5 sm:py-4 px-3 sm:px-5">
-      <Icon className="w-5 h-5 sm:w-[18px] sm:h-[18px] text-gold-300" />
-      <span className="font-serif text-xs sm:text-sm text-gold-100 font-semibold leading-tight text-center">
+    <div className="flex-1 min-w-0 flex flex-col items-center gap-1 sm:gap-1.5 py-3.5 sm:py-4 px-2 min-[380px]:px-3 sm:px-5">
+      <Icon className="w-5 h-5 sm:w-[18px] sm:h-[18px] text-gold-300 flex-shrink-0" />
+      <span
+        className="font-serif text-gold-100 font-semibold leading-tight text-center"
+        style={{ fontSize: "clamp(0.6875rem, 3vw, 0.875rem)" }}
+      >
         {title}
       </span>
-      <span className="text-[10px] sm:text-xs text-white/60 leading-tight text-center">
+      <span
+        className="text-white/60 leading-tight text-center"
+        style={{ fontSize: "clamp(0.5625rem, 2.6vw, 0.75rem)" }}
+      >
         {desc}
       </span>
     </div>
