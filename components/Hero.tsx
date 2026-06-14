@@ -1,14 +1,40 @@
 "use client";
 
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { useEffect } from "react";
+import {
+  motion,
+  useMotionValue,
+  useSpring,
+  useReducedMotion,
+} from "framer-motion";
 import { WHATSAPP_URL, WHATSAPP_GREETING, heroImages } from "@/lib/site";
 import { HomeIcon, DropletIcon, PalmIcon } from "@/components/icons";
 
 export default function Hero() {
-  const scrollToBooking = () => {
-    document.querySelector("#booking")?.scrollIntoView({ behavior: "smooth" });
-  };
+  const prefersReducedMotion = useReducedMotion();
+
+  // Mouse parallax — the oversized background drifts gently opposite the
+  // cursor; springs give the slow "lerp" feel without a rAF loop.
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const bgX = useSpring(mx, { stiffness: 40, damping: 22, mass: 0.9 });
+  const bgY = useSpring(my, { stiffness: 40, damping: 22, mass: 0.9 });
+
+  useEffect(() => {
+    if (prefersReducedMotion) return;
+    // touch devices have no hover cursor — skip the listener entirely
+    if (!window.matchMedia("(pointer: fine)").matches) return;
+
+    const onMove = (e: MouseEvent) => {
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 2;
+      mx.set(((e.clientX - cx) / cx) * -14);
+      my.set(((e.clientY - cy) / cy) * -10);
+    };
+    window.addEventListener("mousemove", onMove);
+    return () => window.removeEventListener("mousemove", onMove);
+  }, [mx, my, prefersReducedMotion]);
 
   const scrollToExperience = () => {
     document.querySelector("#experience")?.scrollIntoView({ behavior: "smooth" });
@@ -19,15 +45,24 @@ export default function Hero() {
       id="home"
       className="relative min-h-[100dvh] flex flex-col justify-center overflow-hidden"
     >
-      {/* Background image */}
-      <Image
-        src={heroImages.primary}
-        alt="أرياف زكي السالم للمياه الكبريتية — الشاليه والحوض"
-        fill
-        priority
-        sizes="100vw"
-        className="object-cover object-center"
-      />
+      {/* Background image — scaled past the edges so the parallax drift never
+          reveals them; settles from a deeper zoom on first paint */}
+      <motion.div
+        className="absolute inset-0 origin-center will-change-transform"
+        style={{ x: bgX, y: bgY }}
+        initial={{ scale: prefersReducedMotion ? 1.08 : 1.16 }}
+        animate={{ scale: 1.08 }}
+        transition={{ duration: 2, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <Image
+          src={heroImages.primary}
+          alt="أرياف زكي السالم للمياه الكبريتية — الشاليه والحوض"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center"
+        />
+      </motion.div>
 
       {/* Mobile overlay — lighter for image clarity */}
       <div className="absolute inset-0 bg-gradient-to-b from-[rgba(20,12,5,0.32)] via-[rgba(20,12,5,0.22)] to-[rgba(20,12,5,0.48)] sm:hidden" />
@@ -49,7 +84,7 @@ export default function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-2 mb-8"
+            className="liquid-glass inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-2 mb-8"
           >
             <span className="w-2 h-2 rounded-full bg-gold-400 animate-pulse" />
             <span className="text-sm font-medium text-white/90">
@@ -109,7 +144,7 @@ export default function Hero() {
             </a>
             <button
               onClick={scrollToExperience}
-              className="inline-flex items-center justify-center gap-2 border border-white/40 text-white hover:bg-white/10 font-semibold text-base px-8 py-4 rounded-2xl transition-all duration-300 backdrop-blur-sm"
+              className="liquid-glass inline-flex items-center justify-center gap-2 bg-white/5 text-white hover:bg-white/15 font-semibold text-base px-8 py-4 rounded-2xl transition-all duration-300"
             >
               اعرف المزيد
             </button>
@@ -125,7 +160,7 @@ export default function Hero() {
         transition={{ duration: 0.6, delay: 0.75 }}
         className="absolute bottom-0 left-0 right-0 z-10 px-4 sm:px-8 lg:px-12 pb-5 sm:pb-10"
       >
-        <div className="flex items-stretch bg-[rgba(10,6,2,0.50)] backdrop-blur-md border border-gold-300/20 rounded-2xl overflow-hidden max-w-lg lg:max-w-xl">
+        <div className="liquid-glass flex items-stretch bg-[rgba(10,6,2,0.42)] rounded-2xl max-w-lg lg:max-w-xl">
           <Stat Icon={HomeIcon}    title="شاليهات خاصة"  desc="خصوصية وراحة لعائلتك"  />
           <div className="w-px bg-white/15 my-3 sm:my-4 flex-shrink-0" />
           <Stat Icon={DropletIcon} title="مياه كبريتية"  desc="تجربة طبيعية هادئة"     />
