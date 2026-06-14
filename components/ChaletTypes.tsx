@@ -1,8 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { WHATSAPP_URL } from "@/lib/site";
 import { WhatsAppIcon } from "@/components/icons";
+import { SELECT_CHALET_EVENT } from "@/components/BookingForm";
+
+/** Pre-select this chalet in the booking form, then scroll there. */
+function openBookingWithChalet(bookingId: string) {
+  window.dispatchEvent(new CustomEvent(SELECT_CHALET_EVENT, { detail: bookingId }));
+  document.querySelector("#booking")?.scrollIntoView({ behavior: "smooth" });
+}
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -13,6 +19,8 @@ interface PricingRow {
 
 interface ChaletDef {
   id: string;
+  /** Matching id in BookingForm's CHALETS list (pre-selects the form). */
+  bookingId: string;
   name: string;
   subtitle: string;
   badge: string;
@@ -31,6 +39,7 @@ interface ChaletDef {
 const chalets: ChaletDef[] = [
   {
     id: "mini",
+    bookingId: "mini",
     name: "شاليهات الميني",
     subtitle: "بالساعة",
     badge: "حجز مباشر",
@@ -51,6 +60,7 @@ const chalets: ChaletDef[] = [
   },
   {
     id: "small",
+    bookingId: "small",
     name: "الشاليهات الصغيرة",
     subtitle: "101 — 102",
     badge: "مناسب للعائلات",
@@ -69,6 +79,7 @@ const chalets: ChaletDef[] = [
   },
   {
     id: "medium",
+    bookingId: "medium",
     name: "الشاليهات الوسط",
     subtitle: "103 — 104",
     badge: "خيار أوسع",
@@ -87,6 +98,7 @@ const chalets: ChaletDef[] = [
   },
   {
     id: "dome-105",
+    bookingId: "dome105",
     name: "القبة المالديفية",
     subtitle: "105",
     badge: "قبة خاصة",
@@ -105,6 +117,7 @@ const chalets: ChaletDef[] = [
   },
   {
     id: "dome-115",
+    bookingId: "vip115",
     name: "القبة المالديفية VIP",
     subtitle: "115",
     badge: "VIP",
@@ -228,17 +241,16 @@ function ChaletCard({ chalet, index }: { chalet: ChaletDef; index: number }) {
         )}
       </div>
 
-      {/* CTA */}
+      {/* CTA — opens the booking form with this chalet pre-selected */}
       <div className="px-6 pb-6 mt-auto">
-        <a
-          href={`${WHATSAPP_URL}?text=${encodeURIComponent(chalet.waMsg)}`}
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          type="button"
+          onClick={() => openBookingWithChalet(chalet.bookingId)}
           className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-sm transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 shadow-sm hover:shadow-md ${chalet.ctaClass}`}
         >
           <WhatsAppIcon className="w-4 h-4" />
           {chalet.ctaLabel}
-        </a>
+        </button>
       </div>
     </motion.div>
   );

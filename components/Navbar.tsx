@@ -2,10 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { WHATSAPP_URL, WHATSAPP_GREETING } from "@/lib/site";
 import { WhatsAppIcon, XIcon } from "@/components/icons";
-
-const WHATSAPP_HREF = `${WHATSAPP_URL}?text=${WHATSAPP_GREETING}`;
 
 const navLinks = [
   { label: "الرئيسية",      href: "#home" },
@@ -85,12 +82,10 @@ export default function Navbar() {
             ))}
           </nav>
 
-          {/* Desktop CTA */}
+          {/* Desktop CTA — routes to the booking form (lead capture) */}
           <div className="hidden lg:block">
-            <a
-              href={WHATSAPP_HREF}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={() => handleNav("#booking")}
               className={`inline-flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-full transition-all duration-300 shadow-sm hover:shadow-md ${
                 scrolled
                   ? "bg-palm-600 hover:bg-palm-500 text-white"
@@ -99,7 +94,7 @@ export default function Navbar() {
             >
               <WhatsAppIcon className="w-4 h-4 text-white" />
               احجز الآن
-            </a>
+            </button>
           </div>
 
           {/* Mobile hamburger */}
@@ -137,16 +132,13 @@ export default function Navbar() {
                   {link.label}
                 </button>
               ))}
-              <a
-                href={WHATSAPP_HREF}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => handleNav("#booking")}
                 className="mt-4 flex items-center justify-center gap-2 bg-palm-600 hover:bg-palm-500 text-white font-semibold py-3.5 rounded-xl transition-colors"
-                onClick={() => setMenuOpen(false)}
               >
                 <WhatsAppIcon className="w-4 h-4 text-white" />
                 احجز الآن عبر واتساب
-              </a>
+              </button>
             </div>
           </motion.div>
         )}

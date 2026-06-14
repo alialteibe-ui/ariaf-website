@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { WHATSAPP_URL } from "@/lib/site";
 import { WhatsAppIcon, CalendarIcon } from "@/components/icons";
@@ -146,13 +146,26 @@ const INITIAL: FormState = {
 
 const N8N_WEBHOOK = "https://n8n.srv1620367.hstgr.cloud/webhook/ariaf-booking-request";
 
+/** Other sections (e.g. ChaletTypes cards) fire this to pre-select a chalet
+ *  in the form. Detail is the CHALETS id. */
+export const SELECT_CHALET_EVENT = "ariaf:select-chalet";
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function BookingForm() {
   const [form, setForm] = useState<FormState>(INITIAL);
+  const [chaletError, setChaletError] = useState(false);
   const [guestsError, setGuestsError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const dateRef = useRef<HTMLInputElement>(null);
+
+  // location.href navigation means the page may be restored from bfcache
+  // when the customer comes back from WhatsApp — re-enable the button then
+  useEffect(() => {
+    const reset = () => setIsSubmitting(false);
+    window.addEventListener("pageshow", reset);
+    return () => window.removeEventListener("pageshow", reset);
+  }, []);
 
   const chalet         = CHALETS.find((c) => c.id === form.chaletId) ?? null;
   const isMini         = chalet?.isMini ?? false;
@@ -174,24 +187,43 @@ export default function BookingForm() {
     }
   };
 
+  // Selecting a chalet (from the dropdown or from a ChaletTypes card) resets
+  // the period and keeps the guest count only if it's still valid for the type.
+  const selectChalet = useCallback((value: string) => {
+    setChaletError(false);
+    setForm((prev) => {
+      const validOptions = GUESTS_OPTIONS[value] ?? [];
+      return {
+        ...prev,
+        chaletId: value,
+        period: "",
+        guests: validOptions.includes(prev.guests) ? prev.guests : "",
+      };
+    });
+  }, []);
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
+    if (name === "chaletId") {
+      selectChalet(value);
+      return;
+    }
     if (name === "guests") setGuestsError(false);
-    setForm((prev) => {
-      if (name === "chaletId") {
-        const validOptions = GUESTS_OPTIONS[value] ?? [];
-        return {
-          ...prev,
-          chaletId: value,
-          period: "",
-          guests: validOptions.includes(prev.guests) ? prev.guests : "",
-        };
-      }
-      return { ...prev, [name]: value };
-    });
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
+
+  // A chalet card elsewhere on the page can pre-select the type here, then
+  // scroll the user to this form.
+  useEffect(() => {
+    const onSelect = (e: Event) => {
+      const id = (e as CustomEvent<string>).detail;
+      if (id) selectChalet(id);
+    };
+    window.addEventListener(SELECT_CHALET_EVENT, onSelect);
+    return () => window.removeEventListener(SELECT_CHALET_EVENT, onSelect);
+  }, [selectChalet]);
 
   const buildMessage = (): string => {
     const dateAr   = formatDate(form.date);
@@ -240,16 +272,23 @@ export default function BookingForm() {
       .trim();
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.chaletId) {
+      setChaletError(true);
+      return;
+    }
     if (!form.guests) {
       setGuestsError(true);
       return;
     }
 
-    setIsSubmitting(true);
+    // iOS Safari blocks navigation that happens after an await — build the
+    // WhatsApp link first and navigate synchronously, no async work before it.
+    const waHref = `${WHATSAPP_URL}?text=${encodeURIComponent(buildMessage())}`;
 
     const payload = {
+      // eslint-disable-next-line react-hooks/purity -- event handler, not render
       orderId:         `AR-${Date.now()}`,
       fullName:        form.fullName,
       phone:           form.phone,
@@ -261,18 +300,23 @@ export default function BookingForm() {
       customerNotes:   form.notes,
     };
 
+    // fire-and-forget — keepalive lets the request complete while the page
+    // navigates away; a webhook failure must never block the customer journey
     try {
-      await fetch(N8N_WEBHOOK, {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify(payload),
-      });
+      fetch(N8N_WEBHOOK, {
+        method:    "POST",
+        headers:   { "Content-Type": "application/json" },
+        body:      JSON.stringify(payload),
+        keepalive: true,
+      }).catch(() => {});
     } catch {
-      // silent — never block the customer journey
-    } finally {
-      setIsSubmitting(false);
-      window.open(`${WHATSAPP_URL}?text=${encodeURIComponent(buildMessage())}`, "_blank");
+      // silent
     }
+
+    setIsSubmitting(true);
+    // same-tab navigation (equivalent to setting location.href) — survives
+    // iOS Safari's popup blocker because it runs in the click's sync path
+    window.location.assign(waHref);
   };
 
   const inputClass =
@@ -327,13 +371,16 @@ export default function BookingForm() {
                     name="chaletId"
                     value={form.chaletId}
                     onChange={handleChange}
-                    className={inputClass}
+                    className={`${inputClass}${chaletError ? " border-red-400 ring-2 ring-red-200/50" : ""}`}
                   >
                     <option value="">اختر نوع الشاليه</option>
                     {CHALETS.map((c) => (
                       <option key={c.id} value={c.id}>{c.label}</option>
                     ))}
                   </select>
+                  {chaletError && (
+                    <p className="text-xs text-red-500 mt-1.5">يرجى اختيار نوع الشاليه قبل الإرسال</p>
+                  )}
                 </div>
 
                 {/* تنبيه الميني */}
