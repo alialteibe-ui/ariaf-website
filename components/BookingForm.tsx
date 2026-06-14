@@ -383,15 +383,6 @@ export default function BookingForm() {
                   )}
                 </div>
 
-                {/* تنبيه الميني */}
-                {isMini && (
-                  <div className="px-4 py-3 bg-amber-50 border border-amber-200/70 rounded-xl">
-                    <p className="text-sm text-amber-800 leading-relaxed">
-                      شاليهات الميني حجزها مباشر من المكتب عند بوابة 2، ولا تحتاج حجز مسبق عبر الموقع.
-                    </p>
-                  </div>
-                )}
-
                 {/* الاسم والجوال */}
                 <div>
                   <label className={labelClass}>الاسم الكامل</label>
