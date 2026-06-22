@@ -3,107 +3,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { WHATSAPP_URL } from "@/lib/site";
+import { CHALETS, getChaletById, estimateMiniPrice } from "@/lib/chalets";
 import { WhatsAppIcon, CalendarIcon } from "@/components/icons";
-
-// ─── Data ─────────────────────────────────────────────────────────────────────
-
-interface PeriodOption {
-  label: string;
-  price: number;
-}
-
-interface ChaletOption {
-  id: string;
-  label: string;
-  isMini: boolean;
-  periods: PeriodOption[];
-}
-
-const CHALETS: ChaletOption[] = [
-  {
-    id: "mini",
-    label: "شاليهات الميني",
-    isMini: true,
-    periods: [
-      { label: "ساعة واحدة",               price: 99  },
-      { label: "ساعتان",                    price: 149 },
-      { label: "٣ ساعات",                   price: 199 },
-      { label: "بكج ٨ أيام (ساعة يومياً)", price: 500 },
-    ],
-  },
-  {
-    id: "small",
-    label: "الشاليهات الصغيرة 101 — 102",
-    isMini: false,
-    periods: [
-      { label: "٥ ساعات",       price: 350 },
-      { label: "١١ ساعة",       price: 600 },
-      { label: "مبيت ٢٣ ساعة", price: 750 },
-    ],
-  },
-  {
-    id: "medium",
-    label: "الشاليهات الوسط 103 — 104",
-    isMini: false,
-    periods: [
-      { label: "٥ ساعات",       price: 450 },
-      { label: "١١ ساعة",       price: 800 },
-      { label: "مبيت ٢٣ ساعة", price: 950 },
-    ],
-  },
-  {
-    id: "dome105",
-    label: "القبة المالديفية 105",
-    isMini: false,
-    periods: [
-      { label: "٥ ساعات",       price: 499  },
-      { label: "١٠ ساعات",      price: 699  },
-      { label: "مبيت ٢٣ ساعة", price: 950  },
-    ],
-  },
-  {
-    id: "vip115",
-    label: "القبة المالديفية VIP 115",
-    isMini: false,
-    periods: [
-      { label: "٥ ساعات",       price: 550  },
-      { label: "١٠ ساعات",      price: 799  },
-      { label: "مبيت ٢٣ ساعة", price: 1150 },
-    ],
-  },
-];
-
-const GUESTS_OPTIONS: Record<string, string[]> = {
-  mini: [
-    "١ — ٣ أفراد",
-    "٣ — ٥ أفراد",
-  ],
-  small: [
-    "١ — ٣ أفراد",
-    "٣ — ٥ أفراد",
-    "٦ — ٨ أفراد",
-  ],
-  medium: [
-    "١ — ٣ أفراد",
-    "٣ — ٥ أفراد",
-    "٦ — ٨ أفراد",
-    "٩ — ١٢ فردًا",
-  ],
-  dome105: [
-    "١ — ٣ أفراد",
-    "٣ — ٥ أفراد",
-    "٦ — ٨ أفراد",
-    "٩ — ١٢ فردًا",
-    "١٣ — ٢٠ فردًا",
-  ],
-  vip115: [
-    "١ — ٣ أفراد",
-    "٣ — ٥ أفراد",
-    "٦ — ٨ أفراد",
-    "٩ — ١٢ فردًا",
-    "١٣ — ٢٠ فردًا",
-  ],
-};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -121,33 +22,55 @@ function formatDate(raw: string): string {
   }
 }
 
+/**
+ * Whole hours between two "HH:MM" times on the same day, rounded up.
+ * Returns null when either time is missing, or when check-out is not after
+ * check-in (e.g. an overnight stay crossing midnight) — those are confirmed
+ * over WhatsApp instead of computed here.
+ */
+function computeHours(checkIn: string, checkOut: string): number | null {
+  if (!checkIn || !checkOut) return null;
+  const [h1, m1] = checkIn.split(":").map(Number);
+  const [h2, m2] = checkOut.split(":").map(Number);
+  if ([h1, m1, h2, m2].some((n) => Number.isNaN(n))) return null;
+  const start = h1 * 60 + m1;
+  const end = h2 * 60 + m2;
+  if (end <= start) return null;
+  return Math.ceil((end - start) / 60);
+}
+
 // ─── State ────────────────────────────────────────────────────────────────────
 
 interface FormState {
-  fullName:  string;
-  phone:     string;
-  chaletId:  string;
-  date:      string;
-  period:    string;
-  guests:    string;
-  notes:     string;
+  fullName:     string;
+  phone:        string;
+  chaletId:     string;
+  chaletNumber: string;
+  date:         string;
+  checkIn:      string;
+  checkOut:     string;
+  period:       string;
+  guests:       string;
+  notes:        string;
 }
 
 const INITIAL: FormState = {
-  fullName:  "",
-  phone:     "",
-  chaletId:  "",
-  date:      "",
-  period:    "",
-  guests:    "",
-  notes:     "",
+  fullName:     "",
+  phone:        "",
+  chaletId:     "",
+  chaletNumber: "",
+  date:         "",
+  checkIn:      "",
+  checkOut:     "",
+  period:       "",
+  guests:       "",
+  notes:        "",
 };
-
 
 const N8N_WEBHOOK = "https://n8n.srv1620367.hstgr.cloud/webhook/ariaf-booking-request";
 
 /** Other sections (e.g. ChaletTypes cards) fire this to pre-select a chalet
- *  in the form. Detail is the CHALETS id. */
+ *  in the form. Detail is the chalet id. */
 export const SELECT_CHALET_EVENT = "ariaf:select-chalet";
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -159,18 +82,30 @@ export default function BookingForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const dateRef = useRef<HTMLInputElement>(null);
 
-  // location.href navigation means the page may be restored from bfcache
-  // when the customer comes back from WhatsApp — re-enable the button then
+  // location navigation means the page may be restored from bfcache when the
+  // customer comes back from WhatsApp — re-enable the button then
   useEffect(() => {
     const reset = () => setIsSubmitting(false);
     window.addEventListener("pageshow", reset);
     return () => window.removeEventListener("pageshow", reset);
   }, []);
 
-  const chalet         = CHALETS.find((c) => c.id === form.chaletId) ?? null;
-  const isMini         = chalet?.isMini ?? false;
-  const estimatedPrice = chalet?.periods.find((p) => p.label === form.period)?.price ?? null;
-  const guestOptions   = form.chaletId ? (GUESTS_OPTIONS[form.chaletId] ?? []) : [];
+  const chalet       = getChaletById(form.chaletId) ?? null;
+  const isMini       = chalet?.isMini ?? false;
+  const hours        = computeHours(form.checkIn, form.checkOut);
+  // both times entered but the window can't be computed (overnight / reversed)
+  const timesPending = Boolean(form.checkIn && form.checkOut) && hours === null;
+  const guestOptions = chalet?.guests ?? [];
+
+  const estimatedPrice: number | null = (() => {
+    if (!chalet) return null;
+    if (isMini) {
+      return hours && chalet.hourlyPricing
+        ? estimateMiniPrice(hours, chalet.hourlyPricing)
+        : null;
+    }
+    return chalet.periods.find((p) => p.label === form.period)?.price ?? null;
+  })();
 
   const openDatePicker = () => {
     const input = dateRef.current;
@@ -187,17 +122,20 @@ export default function BookingForm() {
     }
   };
 
-  // Selecting a chalet (from the dropdown or from a ChaletTypes card) resets
-  // the period and keeps the guest count only if it's still valid for the type.
+  // Selecting a chalet (from the dropdown or a ChaletTypes card) resets the
+  // dependent fields, keeping a value only if it's still valid for the new type.
   const selectChalet = useCallback((value: string) => {
     setChaletError(false);
     setForm((prev) => {
-      const validOptions = GUESTS_OPTIONS[value] ?? [];
+      const c = getChaletById(value);
+      const validGuests  = c?.guests  ?? [];
+      const validNumbers = c?.numbers ?? [];
       return {
         ...prev,
-        chaletId: value,
-        period: "",
-        guests: validOptions.includes(prev.guests) ? prev.guests : "",
+        chaletId:     value,
+        chaletNumber: validNumbers.includes(prev.chaletNumber) ? prev.chaletNumber : "",
+        period:       "",
+        guests:       validGuests.includes(prev.guests) ? prev.guests : "",
       };
     });
   }, []);
@@ -227,43 +165,26 @@ export default function BookingForm() {
 
   const buildMessage = (): string => {
     const dateAr   = formatDate(form.date);
-    const priceStr = estimatedPrice
-      ? `${estimatedPrice.toLocaleString("en-US")} ريال`
-      : "—";
-
-    if (isMini) {
-      const lines = [
-        "مرحبًا، لدي استفسار عن شاليهات الميني في أرياف زكي السالم للمياه الكبريتية.",
-        "",
-        form.fullName ? `الاسم: ${form.fullName}`        : null,
-        form.phone    ? `رقم الجوال: ${form.phone}`      : null,
-        form.date     ? `تاريخ الزيارة: ${dateAr}`       : null,
-        form.period   ? `المدة المطلوبة: ${form.period}` : null,
-        form.guests   ? `عدد الأشخاص: ${form.guests}`    : null,
-        form.notes    ? `ملاحظات: ${form.notes}`         : null,
-        "",
-        "أفهم أن شاليهات الميني حجزها مباشر من المكتب عند بوابة 2، وأرغب بالاستفسار عن التفاصيل.",
-      ];
-      return lines
-        .filter((l): l is string => l !== null)
-        .join("\n")
-        .replace(/\n{3,}/g, "\n\n")
-        .trim();
-    }
+    const priceStr = estimatedPrice ? `${estimatedPrice.toLocaleString("en-US")} ريال` : null;
+    const hoursStr = hours ? `${hours} ساعة` : null;
 
     const lines = [
       "مرحبًا، أرغب بحجز شاليه في أرياف زكي السالم للمياه الكبريتية.",
       "",
-      form.fullName      ? `الاسم: ${form.fullName}`           : null,
-      form.phone         ? `رقم الجوال: ${form.phone}`         : null,
-      chalet             ? `نوع الشاليه: ${chalet.label}`      : null,
-      form.date          ? `تاريخ الوصول: ${dateAr}`           : null,
-      form.period        ? `مدة الحجز: ${form.period}`         : null,
-      form.guests        ? `عدد الأشخاص: ${form.guests}`       : null,
-      estimatedPrice     ? `السعر التقديري: ${priceStr}`       : null,
-      form.notes         ? `ملاحظات: ${form.notes}`            : null,
+      form.fullName     ? `الاسم: ${form.fullName}`              : null,
+      form.phone        ? `رقم الجوال: ${form.phone}`            : null,
+      chalet            ? `نوع الشاليه: ${chalet.name}`          : null,
+      form.chaletNumber ? `رقم الشاليه: ${form.chaletNumber}`    : null,
+      form.date         ? `التاريخ: ${dateAr}`                   : null,
+      form.checkIn      ? `وقت الدخول: ${form.checkIn}`          : null,
+      form.checkOut     ? `وقت الخروج: ${form.checkOut}`         : null,
+      hoursStr          ? `عدد الساعات: ${hoursStr}`             : null,
+      form.period       ? `مدة الحجز: ${form.period}`            : null,
+      form.guests       ? `عدد الأشخاص: ${form.guests}`          : null,
+      priceStr          ? `السعر التقديري: ${priceStr}`          : null,
+      form.notes        ? `ملاحظات: ${form.notes}`               : null,
       "",
-      "أرجو تأكيد التوفر والسعر النهائي.",
+      "يرجى تأكيد السعر والتوفر.",
     ];
     return lines
       .filter((l): l is string => l !== null)
@@ -292,8 +213,12 @@ export default function BookingForm() {
       orderId:         `AR-${Date.now()}`,
       fullName:        form.fullName,
       phone:           form.phone,
-      chaletType:      chalet?.label ?? form.chaletId,
+      chaletType:      chalet?.name ?? form.chaletId,
+      chaletNumber:    form.chaletNumber,
       arrivalDate:     form.date,
+      checkIn:         form.checkIn,
+      checkOut:        form.checkOut,
+      hours:           hours ?? null,
       bookingDuration: form.period,
       guests:          form.guests,
       estimatedPrice:  estimatedPrice ?? 0,
@@ -347,103 +272,141 @@ export default function BookingForm() {
           </p>
         </motion.div>
 
-          {/* ── Form ──────────────────────────────── */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.55 }}
-          >
-            <div className="bg-white rounded-3xl shadow-[0_8px_50px_rgba(61,43,31,0.07)] border border-sand-100 p-7 lg:p-10">
-              <h3 className="font-semibold text-charcoal text-lg mb-1">
-                {isMini ? "استفسر عن شاليهات الميني" : "أرسل طلب حجزك"}
-              </h3>
-              <p className="text-xs text-brown-400 mb-7">
-                جميع الحقول اختيارية — أرسل ما تعرفه والباقي نُكمله معاً.
-              </p>
+        {/* ── Form ──────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.55 }}
+        >
+          <div className="bg-white rounded-3xl shadow-[0_8px_50px_rgba(61,43,31,0.07)] border border-sand-100 p-7 lg:p-10">
+            <h3 className="font-semibold text-charcoal text-lg mb-1">أرسل طلب حجزك</h3>
+            <p className="text-xs text-brown-400 mb-7">
+              جميع الحقول اختيارية — أرسل ما تعرفه والباقي نُكمله معاً.
+            </p>
 
-              <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5">
 
-                {/* ١. نوع الشاليه */}
-                <div>
-                  <label className={labelClass}>نوع الشاليه</label>
-                  <select
-                    name="chaletId"
-                    value={form.chaletId}
-                    onChange={handleChange}
-                    className={`${inputClass}${chaletError ? " border-red-400 ring-2 ring-red-200/50" : ""}`}
-                  >
-                    <option value="">اختر نوع الشاليه</option>
-                    {CHALETS.map((c) => (
-                      <option key={c.id} value={c.id}>{c.label}</option>
-                    ))}
-                  </select>
-                  {chaletError && (
-                    <p className="text-xs text-red-500 mt-1.5">يرجى اختيار نوع الشاليه قبل الإرسال</p>
-                  )}
-                </div>
+              {/* ١. نوع الشاليه */}
+              <div>
+                <label className={labelClass}>نوع الشاليه</label>
+                <select
+                  name="chaletId"
+                  value={form.chaletId}
+                  onChange={handleChange}
+                  className={`${inputClass}${chaletError ? " border-red-400 ring-2 ring-red-200/50" : ""}`}
+                >
+                  <option value="">اختر نوع الشاليه</option>
+                  {CHALETS.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+                {chaletError && (
+                  <p className="text-xs text-red-500 mt-1.5">يرجى اختيار نوع الشاليه قبل الإرسال</p>
+                )}
+              </div>
 
-                {/* الاسم والجوال */}
-                <div>
-                  <label className={labelClass}>الاسم الكامل</label>
+              {/* ٢. رقم الشاليه — يعتمد على النوع */}
+              <div>
+                <label className={labelClass}>رقم الشاليه</label>
+                <select
+                  name="chaletNumber"
+                  value={form.chaletNumber}
+                  onChange={handleChange}
+                  disabled={!chalet}
+                  className={`${inputClass} disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  <option value="">
+                    {chalet ? "اختر رقم الشاليه" : "اختر نوع الشاليه أولاً"}
+                  </option>
+                  {chalet?.numbers.map((n) => (
+                    <option key={n} value={n}>{n}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* ٣. التاريخ */}
+              <div>
+                <label className={labelClass}>التاريخ</label>
+                <div
+                  className="relative cursor-pointer"
+                  onClick={openDatePicker}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === "Enter" && openDatePicker()}
+                  aria-label="اختر التاريخ"
+                >
+                  <div className={`${inputClass} flex items-center justify-between gap-2 pointer-events-none`}>
+                    <span className={form.date ? "text-charcoal" : "text-brown-400/50"}>
+                      {form.date ? formatDate(form.date) : "اختر التاريخ"}
+                    </span>
+                    <CalendarIcon className="w-4 h-4 text-brown-400/40 flex-shrink-0 pointer-events-none" />
+                  </div>
                   <input
-                    type="text"
-                    name="fullName"
-                    value={form.fullName}
+                    ref={dateRef}
+                    type="date"
+                    name="date"
+                    value={form.date}
                     onChange={handleChange}
-                    placeholder="أدخل اسمك الكامل"
+                    min={new Date().toISOString().split("T")[0]}
+                    tabIndex={-1}
+                    aria-hidden="true"
+                    className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
+                  />
+                </div>
+              </div>
+
+              {/* ٤ + ٥. وقت الدخول والخروج */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={labelClass}>وقت الدخول</label>
+                  <input
+                    type="time"
+                    name="checkIn"
+                    value={form.checkIn}
+                    onChange={handleChange}
                     className={inputClass}
                   />
                 </div>
                 <div>
-                  <label className={labelClass}>رقم الجوال</label>
+                  <label className={labelClass}>وقت الخروج</label>
                   <input
-                    type="tel"
-                    name="phone"
-                    value={form.phone}
+                    type="time"
+                    name="checkOut"
+                    value={form.checkOut}
                     onChange={handleChange}
-                    placeholder="05xxxxxxxx"
-                    dir="ltr"
-                    className={`${inputClass} text-left`}
+                    className={inputClass}
                   />
                 </div>
+              </div>
 
-                {/* تاريخ الوصول */}
-                <div>
-                  <label className={labelClass}>
-                    {isMini ? "تاريخ الزيارة" : "تاريخ الوصول"}
-                  </label>
-                  <div
-                    className="relative cursor-pointer"
-                    onClick={openDatePicker}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => e.key === "Enter" && openDatePicker()}
-                    aria-label={isMini ? "اختر تاريخ الزيارة" : "اختر تاريخ الوصول"}
-                  >
-                    <div className={`${inputClass} flex items-center justify-between gap-2 pointer-events-none`}>
-                      <span className={form.date ? "text-charcoal" : "text-brown-400/50"}>
-                        {form.date ? formatDate(form.date) : "اختر تاريخ الوصول"}
-                      </span>
-                      <CalendarIcon className="w-4 h-4 text-brown-400/40 flex-shrink-0 pointer-events-none" />
-                    </div>
-                    <input
-                      ref={dateRef}
-                      type="date"
-                      name="date"
-                      value={form.date}
-                      onChange={handleChange}
-                      min={new Date().toISOString().split("T")[0]}
-                      tabIndex={-1}
-                      aria-hidden="true"
-                      className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
-                    />
-                  </div>
+              {/* ٦. عدد الساعات — تلقائي */}
+              <div>
+                <label className={labelClass}>عدد الساعات</label>
+                <div className={`${inputClass} bg-sand-50`}>
+                  <span className={hours ? "text-charcoal" : "text-brown-400/50"}>
+                    {hours ? `${hours} ساعة` : "يُحسب تلقائيًا من وقت الدخول والخروج"}
+                  </span>
                 </div>
+                {timesPending && (
+                  <div className="mt-2 px-3 py-2.5 bg-amber-50 border border-amber-200/70 rounded-xl">
+                    <p className="text-xs text-amber-700 leading-relaxed">
+                      سيتم تأكيد الوقت والتوفر عبر واتساب.
+                    </p>
+                  </div>
+                )}
+              </div>
 
-                {/* مدة الحجز — ديناميكية */}
-                <div>
-                  <label className={labelClass}>مدة الحجز</label>
+              {/* ٧. مدة الحجز */}
+              <div>
+                <label className={labelClass}>مدة الحجز</label>
+                {isMini ? (
+                  <div className={`${inputClass} bg-sand-50`}>
+                    <span className="text-brown-500 text-xs leading-relaxed">
+                      تُحتسب مدة الميني من وقت الدخول والخروج — {chalet?.durationNote}
+                    </span>
+                  </div>
+                ) : (
                   <select
                     name="period"
                     value={form.period}
@@ -460,87 +423,117 @@ export default function BookingForm() {
                       </option>
                     ))}
                   </select>
-                </div>
-
-                {/* السعر التقديري */}
-                {estimatedPrice !== null && (
-                  <div className="px-4 py-3.5 bg-sand-50 border border-sand-200 rounded-xl">
-                    <p className="text-sm text-charcoal font-semibold">
-                      السعر التقديري:{" "}
-                      <span className="text-gold-600">
-                        {estimatedPrice.toLocaleString("en-US")} ريال
-                      </span>
-                    </p>
-                    <p className="text-xs text-brown-400/70 mt-1">
-                      السعر والتوفر يتم تأكيدهما من الإدارة عبر واتساب.
-                    </p>
-                  </div>
                 )}
+              </div>
 
-                {/* عدد الأشخاص */}
-                <div>
-                  <label className={labelClass}>عدد الأشخاص</label>
-                  <select
-                    name="guests"
-                    value={form.guests}
-                    onChange={handleChange}
-                    disabled={!chalet}
-                    className={`${inputClass} disabled:opacity-50 disabled:cursor-not-allowed${guestsError ? " border-red-400 ring-2 ring-red-200/50" : ""}`}
-                  >
-                    <option value="">
-                      {chalet ? "اختر العدد" : "اختر نوع الشاليه أولاً"}
-                    </option>
-                    {guestOptions.map((opt) => (
-                      <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                  </select>
-                  {guestsError && (
-                    <p className="text-xs text-red-500 mt-1.5">يرجى اختيار عدد الأشخاص قبل الإرسال</p>
-                  )}
+              {/* السعر التقديري */}
+              {estimatedPrice !== null && (
+                <div className="px-4 py-3.5 bg-sand-50 border border-sand-200 rounded-xl">
+                  <p className="text-sm text-charcoal font-semibold">
+                    السعر التقديري:{" "}
+                    <span className="text-gold-600">
+                      {estimatedPrice.toLocaleString("en-US")} ريال
+                    </span>
+                  </p>
+                  <p className="text-xs text-brown-400/70 mt-1">
+                    {isMini
+                      ? "محسوب بالساعة (٩٩ للأولى + ٥٠ لكل إضافية). السعر والتوفر يُؤكدان عبر واتساب."
+                      : "السعر والتوفر يتم تأكيدهما من الإدارة عبر واتساب."}
+                  </p>
                 </div>
+              )}
 
-                {/* ملاحظات */}
-                <div>
-                  <label className={labelClass}>ملاحظات إضافية</label>
-                  <textarea
-                    name="notes"
-                    rows={3}
-                    placeholder="أي طلبات خاصة، وقت وصول مفضّل، استفسارات..."
-                    value={form.notes}
-                    onChange={handleChange}
-                    className={`${inputClass} resize-none`}
-                  />
-                </div>
-
-                {/* زر الإرسال */}
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full flex items-center justify-center gap-3 bg-palm-600 hover:bg-palm-500 disabled:opacity-70 disabled:cursor-not-allowed text-white font-bold text-base py-4 rounded-2xl shadow-[0_4px_20px_rgba(74,103,65,0.25)] hover:shadow-[0_6px_30px_rgba(74,103,65,0.35)] transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 mt-2"
+              {/* ٨. عدد الأشخاص */}
+              <div>
+                <label className={labelClass}>عدد الأشخاص</label>
+                <select
+                  name="guests"
+                  value={form.guests}
+                  onChange={handleChange}
+                  disabled={!chalet}
+                  className={`${inputClass} disabled:opacity-50 disabled:cursor-not-allowed${guestsError ? " border-red-400 ring-2 ring-red-200/50" : ""}`}
                 >
-                  {isSubmitting ? (
-                    <>
-                      <svg className="w-4 h-4 animate-spin text-white" viewBox="0 0 24 24" fill="none">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                      </svg>
-                      جاري الإرسال...
-                    </>
-                  ) : (
-                    <>
-                      <WhatsAppIcon className="w-[18px] h-[18px] text-white" />
-                      {isMini ? "استفسر عبر واتساب" : "أرسل طلب الحجز عبر واتساب"}
-                    </>
-                  )}
-                </button>
+                  <option value="">
+                    {chalet ? "اختر العدد" : "اختر نوع الشاليه أولاً"}
+                  </option>
+                  {guestOptions.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+                {guestsError && (
+                  <p className="text-xs text-red-500 mt-1.5">يرجى اختيار عدد الأشخاص قبل الإرسال</p>
+                )}
+              </div>
 
-                <p className="text-center text-xs text-brown-400/70 leading-relaxed pt-1 max-w-xs mx-auto">
-                  بعد الضغط على الزر سيتم فتح واتساب برسالة جاهزة، فضلاً اضغط إرسال داخل واتساب لإتمام طلب الحجز.
-                </p>
+              {/* ٩. الاسم */}
+              <div>
+                <label className={labelClass}>الاسم الكامل</label>
+                <input
+                  type="text"
+                  name="fullName"
+                  value={form.fullName}
+                  onChange={handleChange}
+                  placeholder="أدخل اسمك الكامل"
+                  className={inputClass}
+                />
+              </div>
 
-              </form>
-            </div>
-          </motion.div>
+              {/* ١٠. رقم الجوال */}
+              <div>
+                <label className={labelClass}>رقم الجوال</label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={form.phone}
+                  onChange={handleChange}
+                  placeholder="05xxxxxxxx"
+                  dir="ltr"
+                  className={`${inputClass} text-left`}
+                />
+              </div>
+
+              {/* ١١. ملاحظات */}
+              <div>
+                <label className={labelClass}>ملاحظات إضافية</label>
+                <textarea
+                  name="notes"
+                  rows={3}
+                  placeholder="أي طلبات خاصة، وقت وصول مفضّل، استفسارات..."
+                  value={form.notes}
+                  onChange={handleChange}
+                  className={`${inputClass} resize-none`}
+                />
+              </div>
+
+              {/* زر الإرسال */}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full flex items-center justify-center gap-3 bg-palm-600 hover:bg-palm-500 disabled:opacity-70 disabled:cursor-not-allowed text-white font-bold text-base py-4 rounded-2xl shadow-[0_4px_20px_rgba(74,103,65,0.25)] hover:shadow-[0_6px_30px_rgba(74,103,65,0.35)] transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 mt-2"
+              >
+                {isSubmitting ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin text-white" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                    جاري الإرسال...
+                  </>
+                ) : (
+                  <>
+                    <WhatsAppIcon className="w-[18px] h-[18px] text-white" />
+                    أرسل طلب الحجز عبر واتساب
+                  </>
+                )}
+              </button>
+
+              <p className="text-center text-xs text-brown-400/70 leading-relaxed pt-1 max-w-xs mx-auto">
+                بعد الضغط على الزر سيتم فتح واتساب برسالة جاهزة، فضلاً اضغط إرسال داخل واتساب لإتمام طلب الحجز.
+              </p>
+
+            </form>
+          </div>
+        </motion.div>
 
       </div>
     </section>
