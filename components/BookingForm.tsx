@@ -122,6 +122,18 @@ export default function BookingForm() {
     }
   };
 
+  // Clicking anywhere on a time field opens its picker (not just the clock icon).
+  const openTimePicker = (e: React.MouseEvent<HTMLInputElement>) => {
+    const input = e.currentTarget as HTMLInputElement & { showPicker?: () => void };
+    if (typeof input.showPicker === "function") {
+      try {
+        input.showPicker();
+      } catch {
+        // showPicker can throw if not user-activated; the native click still focuses
+      }
+    }
+  };
+
   // Selecting a chalet (from the dropdown or a ChaletTypes card) resets the
   // dependent fields, keeping a value only if it's still valid for the new type.
   const selectChalet = useCallback((value: string) => {
@@ -365,7 +377,10 @@ export default function BookingForm() {
                     name="checkIn"
                     value={form.checkIn}
                     onChange={handleChange}
-                    className={inputClass}
+                    onClick={openTimePicker}
+                    lang="en"
+                    dir="ltr"
+                    className={`${inputClass} cursor-pointer text-left`}
                   />
                 </div>
                 <div>
@@ -375,7 +390,10 @@ export default function BookingForm() {
                     name="checkOut"
                     value={form.checkOut}
                     onChange={handleChange}
-                    className={inputClass}
+                    onClick={openTimePicker}
+                    lang="en"
+                    dir="ltr"
+                    className={`${inputClass} cursor-pointer text-left`}
                   />
                 </div>
               </div>
