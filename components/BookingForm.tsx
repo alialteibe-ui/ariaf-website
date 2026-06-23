@@ -28,15 +28,33 @@ function formatDate(raw: string): string {
  * check-in (e.g. an overnight stay crossing midnight) — those are confirmed
  * over WhatsApp instead of computed here.
  */
-function computeHours(checkIn: string, checkOut: string): number | null {
-  if (!checkIn || !checkOut) return null;
+interface Duration {
+  hours: number | null;
+  overnight: boolean;
+}
+
+/**
+ * Whole hours between two "HH:MM" times, rounded up. If check-out is earlier
+ * than check-in it is treated as the next day (overnight), e.g. 20:00 → 02:00
+ * = 6 hours. hours is null only when a time is missing or both are identical.
+ */
+function computeDuration(checkIn: string, checkOut: string): Duration {
+  if (!checkIn || !checkOut) return { hours: null, overnight: false };
   const [h1, m1] = checkIn.split(":").map(Number);
   const [h2, m2] = checkOut.split(":").map(Number);
-  if ([h1, m1, h2, m2].some((n) => Number.isNaN(n))) return null;
+  if ([h1, m1, h2, m2].some((n) => Number.isNaN(n))) {
+    return { hours: null, overnight: false };
+  }
   const start = h1 * 60 + m1;
   const end = h2 * 60 + m2;
-  if (end <= start) return null;
-  return Math.ceil((end - start) / 60);
+  let diff = end - start;
+  let overnight = false;
+  if (diff < 0) {
+    diff += 24 * 60; // check-out is on the next day
+    overnight = true;
+  }
+  if (diff === 0) return { hours: null, overnight: false };
+  return { hours: Math.ceil(diff / 60), overnight };
 }
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -92,10 +110,13 @@ export default function BookingForm() {
 
   const chalet       = getChaletById(form.chaletId) ?? null;
   const isMini       = chalet?.isMini ?? false;
-  const hours        = computeHours(form.checkIn, form.checkOut);
-  // both times entered but the window can't be computed (overnight / reversed)
-  const timesPending = Boolean(form.checkIn && form.checkOut) && hours === null;
+  const { hours, overnight } = computeDuration(form.checkIn, form.checkOut);
   const guestOptions = chalet?.guests ?? [];
+
+  // The booking summary appears once the core choices are made.
+  const showSummary = Boolean(
+    form.chaletId && form.chaletNumber && form.date && form.checkIn && form.checkOut
+  );
 
   const estimatedPrice: number | null = (() => {
     if (!chalet) return null;
@@ -177,8 +198,12 @@ export default function BookingForm() {
 
   const buildMessage = (): string => {
     const dateAr   = formatDate(form.date);
-    const priceStr = estimatedPrice ? `${estimatedPrice.toLocaleString("en-US")} ريال` : null;
-    const hoursStr = hours ? `${hours} ساعة` : null;
+    const hoursStr = hours
+      ? `${hours} ساعة${overnight ? " (الخروج في اليوم التالي)" : ""}`
+      : null;
+    const priceLine = estimatedPrice
+      ? `السعر التقديري: ${estimatedPrice.toLocaleString("en-US")} ريال`
+      : "السعر: يتم تأكيده عبر واتساب";
 
     const lines = [
       "مرحبًا، أرغب بحجز شاليه في أرياف زكي السالم للمياه الكبريتية.",
@@ -193,7 +218,7 @@ export default function BookingForm() {
       hoursStr          ? `عدد الساعات: ${hoursStr}`             : null,
       form.period       ? `مدة الحجز: ${form.period}`            : null,
       form.guests       ? `عدد الأشخاص: ${form.guests}`          : null,
-      priceStr          ? `السعر التقديري: ${priceStr}`          : null,
+      priceLine,
       form.notes        ? `ملاحظات: ${form.notes}`               : null,
       "",
       "يرجى تأكيد السعر والتوفر.",
@@ -406,12 +431,8 @@ export default function BookingForm() {
                     {hours ? `${hours} ساعة` : "يُحسب تلقائيًا من وقت الدخول والخروج"}
                   </span>
                 </div>
-                {timesPending && (
-                  <div className="mt-2 px-3 py-2.5 bg-amber-50 border border-amber-200/70 rounded-xl">
-                    <p className="text-xs text-amber-700 leading-relaxed">
-                      سيتم تأكيد الوقت والتوفر عبر واتساب.
-                    </p>
-                  </div>
+                {overnight && (
+                  <p className="text-xs text-amber-700 mt-1.5">الخروج في اليوم التالي</p>
                 )}
               </div>
 
@@ -443,23 +464,6 @@ export default function BookingForm() {
                   </select>
                 )}
               </div>
-
-              {/* السعر التقديري */}
-              {estimatedPrice !== null && (
-                <div className="px-4 py-3.5 bg-sand-50 border border-sand-200 rounded-xl">
-                  <p className="text-sm text-charcoal font-semibold">
-                    السعر التقديري:{" "}
-                    <span className="text-gold-600">
-                      {estimatedPrice.toLocaleString("en-US")} ريال
-                    </span>
-                  </p>
-                  <p className="text-xs text-brown-400/70 mt-1">
-                    {isMini
-                      ? "محسوب بالساعة (٩٩ للأولى + ٥٠ لكل إضافية). السعر والتوفر يُؤكدان عبر واتساب."
-                      : "السعر والتوفر يتم تأكيدهما من الإدارة عبر واتساب."}
-                  </p>
-                </div>
-              )}
 
               {/* ٨. عدد الأشخاص */}
               <div>
@@ -523,6 +527,41 @@ export default function BookingForm() {
                 />
               </div>
 
+              {/* ملخص الحجز — يظهر بعد اختيار النوع والرقم والتاريخ والوقتين */}
+              {showSummary && (
+                <div className="px-5 py-4 bg-sand-50 border-2 border-gold-300/50 rounded-2xl">
+                  <p className="font-serif text-base text-charcoal font-semibold mb-3">
+                    ملخص الحجز
+                  </p>
+                  <dl className="space-y-1.5 text-sm">
+                    <SummaryRow label="نوع الشاليه" value={chalet?.name ?? "—"} />
+                    <SummaryRow label="رقم الشاليه" value={form.chaletNumber} />
+                    <SummaryRow label="الدخول" value={form.checkIn} ltr />
+                    <SummaryRow label="الخروج" value={form.checkOut} ltr />
+                    <SummaryRow
+                      label="عدد الساعات"
+                      value={
+                        hours
+                          ? `${hours} ساعة${overnight ? " (الخروج في اليوم التالي)" : ""}`
+                          : "—"
+                      }
+                    />
+                    <SummaryRow
+                      label="السعر التقديري"
+                      value={
+                        estimatedPrice !== null
+                          ? `${estimatedPrice.toLocaleString("en-US")} ريال`
+                          : "يتم تأكيد السعر عبر واتساب"
+                      }
+                      strong
+                    />
+                  </dl>
+                  <p className="text-xs text-brown-400/70 mt-3 leading-relaxed">
+                    ملاحظة: يتم تأكيد التوفر النهائي عبر واتساب.
+                  </p>
+                </div>
+              )}
+
               {/* زر الإرسال */}
               <button
                 type="submit"
@@ -555,5 +594,31 @@ export default function BookingForm() {
 
       </div>
     </section>
+  );
+}
+
+// ─── Summary row ──────────────────────────────────────────────────────────────
+
+function SummaryRow({
+  label,
+  value,
+  ltr,
+  strong,
+}: {
+  label: string;
+  value: string;
+  ltr?: boolean;
+  strong?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <dt className="text-brown-400">{label}</dt>
+      <dd
+        className={strong ? "font-bold text-gold-600" : "text-charcoal font-medium"}
+        dir={ltr ? "ltr" : undefined}
+      >
+        {value}
+      </dd>
+    </div>
   );
 }
