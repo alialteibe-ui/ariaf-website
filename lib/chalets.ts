@@ -72,12 +72,13 @@ export const CHALETS: Chalet[] = [
     poolCapacity: 5,
     bathrooms: "دورة مياه",
     rooms: "غرفة نوم صغيرة",
-    // TODO: replace with /image/chalets/mini/mini-1..4.jpg
     images: [
-      "/image/chalets/water-01.jpg",
-      "/image/chalets/water-02.jpg",
-      "/image/chalets/water-03.jpg",
-      "/image/chalets/water-04.jpg",
+      "/image/chalets/mini/mini-01.webp",
+      "/image/chalets/mini/mini-02.webp",
+      "/image/chalets/mini/mini-03.webp",
+      "/image/chalets/mini/mini-04.webp",
+      "/image/chalets/mini/mini-05.webp",
+      "/image/chalets/mini/mini-06.webp",
     ],
     features: [
       "بركة مياه كبريتية تكفي ٥ أشخاص",
@@ -105,12 +106,14 @@ export const CHALETS: Chalet[] = [
     poolCapacity: 7,
     bathrooms: "دورتين مياه",
     rooms: "غرفة نوم + مجلس",
-    // TODO: replace with /image/chalets/small/small-1..4.jpg
     images: [
-      "/image/chalets/exterior-01.jpg",
-      "/image/chalets/interior-01.jpg",
-      "/image/chalets/bedroom-01.jpg",
-      "/image/chalets/outdoor-seating-01.jpg",
+      "/image/chalets/small/small-01.webp",
+      "/image/chalets/small/small-02.webp",
+      "/image/chalets/small/small-03.webp",
+      "/image/chalets/small/small-04.webp",
+      "/image/chalets/small/small-05.webp",
+      "/image/chalets/small/small-06.webp",
+      "/image/chalets/small/small-07.webp",
     ],
     features: [
       "بركة مياه كبريتية تكفي ٧ أشخاص",
@@ -140,12 +143,12 @@ export const CHALETS: Chalet[] = [
     poolCapacity: 7,
     bathrooms: "دورتين مياه",
     rooms: "غرفة نوم + مجلس",
-    // TODO: replace with /image/chalets/medium/medium-1..4.jpg
     images: [
-      "/image/chalets/exterior-02.jpg",
-      "/image/chalets/interior-02.jpg",
-      "/image/chalets/interior-03.jpg",
-      "/image/chalets/outdoor-seating-02.jpg",
+      "/image/chalets/medium/medium-01.webp",
+      "/image/chalets/medium/medium-02.webp",
+      "/image/chalets/medium/medium-03.webp",
+      "/image/chalets/medium/medium-04.webp",
+      "/image/chalets/medium/medium-05.webp",
     ],
     features: [
       "بركة مياه كبريتية تكفي ٧ أشخاص",
@@ -176,12 +179,23 @@ export const CHALETS: Chalet[] = [
     poolCapacity: 10,
     bathrooms: "دورتين مياه",
     rooms: "غرفة نوم خاصة + صالة مكيفة",
-    // TODO: replace with /image/chalets/maldives-vip/maldives-vip-1..4.jpg
+    // Curated selection from public/image/chalets/maldives-vip/115/ (all .jpg).
+    // Order: exterior impression → pool/water → bedroom → interior → outdoor seating.
     images: [
-      "/image/chalets/outdoor-seating-03.jpg",
-      "/image/chalets/hero-02.jpg",
-      "/image/chalets/hero-03.jpg",
-      "/image/chalets/exterior-04.jpg",
+      "/image/chalets/maldives-vip/115/hero-02.jpg",
+      "/image/chalets/maldives-vip/115/hero-01.jpg",
+      "/image/chalets/maldives-vip/115/exterior-02.jpg",
+      "/image/chalets/maldives-vip/115/exterior-03.jpg",
+      "/image/chalets/maldives-vip/115/water-01.jpg",
+      "/image/chalets/maldives-vip/115/water-03.jpg",
+      "/image/chalets/maldives-vip/115/water-02.jpg",
+      "/image/chalets/maldives-vip/115/bedroom-01.jpg",
+      "/image/chalets/maldives-vip/115/bedroom-02.jpg",
+      "/image/chalets/maldives-vip/115/interior-01.jpg",
+      "/image/chalets/maldives-vip/115/interior-02.jpg",
+      "/image/chalets/maldives-vip/115/interior-03.jpg",
+      "/image/chalets/maldives-vip/115/outdoor-seating-03.jpg",
+      "/image/chalets/maldives-vip/115/outdoor-seating-02.jpg",
     ],
     features: [
       "بركة مياه كبريتية تكفي ١٠ أشخاص",
