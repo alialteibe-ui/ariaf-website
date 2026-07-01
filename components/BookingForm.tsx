@@ -67,23 +67,29 @@ interface FormState {
   date:         string;
   checkIn:      string;
   checkOut:     string;
+  /** عدد الساعات المتوقع للميني — استعلام توفر بالساعة (mini only). */
+  expectedHours: string;
   period:       string;
   guests:       string;
   notes:        string;
 }
 
 const INITIAL: FormState = {
-  fullName:     "",
-  phone:        "",
-  chaletId:     "",
-  chaletNumber: "",
-  date:         "",
-  checkIn:      "",
-  checkOut:     "",
-  period:       "",
-  guests:       "",
-  notes:        "",
+  fullName:      "",
+  phone:         "",
+  chaletId:      "",
+  chaletNumber:  "",
+  date:          "",
+  checkIn:       "",
+  checkOut:      "",
+  expectedHours: "",
+  period:        "",
+  guests:        "",
+  notes:         "",
 };
+
+/** Expected-hours options for the mini availability inquiry (1–8 hours). */
+const MINI_HOUR_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8];
 
 const N8N_WEBHOOK = "https://n8n.srv1620367.hstgr.cloud/webhook/ariaf-booking-request";
 
@@ -110,13 +116,18 @@ export default function BookingForm() {
 
   const chalet       = getChaletById(form.chaletId) ?? null;
   const isMini       = chalet?.isMini ?? false;
-  const { hours, overnight } = computeDuration(form.checkIn, form.checkOut);
+  const { hours: computedHours, overnight } = computeDuration(form.checkIn, form.checkOut);
+  // Mini is an availability inquiry billed by the hour — the customer picks the
+  // expected number of hours directly rather than a check-out time.
+  const miniHours    = form.expectedHours ? parseInt(form.expectedHours, 10) : null;
+  const hours        = isMini ? miniHours : computedHours;
   const guestOptions = chalet?.guests ?? [];
 
-  // The booking summary appears once the core choices are made.
-  const showSummary = Boolean(
-    form.chaletId && form.chaletNumber && form.date && form.checkIn && form.checkOut
-  );
+  // The summary appears once the core choices are made. Mini has no chalet
+  // number or check-out (number is assigned on arrival, duration is by hours).
+  const showSummary = isMini
+    ? Boolean(form.chaletId && form.date && form.checkIn && form.expectedHours)
+    : Boolean(form.chaletId && form.chaletNumber && form.date && form.checkIn && form.checkOut);
 
   const estimatedPrice: number | null = (() => {
     if (!chalet) return null;
@@ -165,10 +176,11 @@ export default function BookingForm() {
       const validNumbers = c?.numbers ?? [];
       return {
         ...prev,
-        chaletId:     value,
-        chaletNumber: validNumbers.includes(prev.chaletNumber) ? prev.chaletNumber : "",
-        period:       "",
-        guests:       validGuests.includes(prev.guests) ? prev.guests : "",
+        chaletId:      value,
+        chaletNumber:  validNumbers.includes(prev.chaletNumber) ? prev.chaletNumber : "",
+        period:        "",
+        expectedHours: "",
+        guests:        validGuests.includes(prev.guests) ? prev.guests : "",
       };
     });
   }, []);
@@ -204,6 +216,29 @@ export default function BookingForm() {
     const priceLine = estimatedPrice
       ? `السعر التقديري: ${estimatedPrice.toLocaleString("en-US")} ريال`
       : "السعر: يتم تأكيده عبر واتساب";
+
+    // Mini = availability inquiry, not a confirmed booking.
+    if (isMini) {
+      const miniLines = [
+        "مرحبًا، أرغب بالاستعلام عن توفر شاليه ميني في أرياف زكي السالم للمياه الكبريتية.",
+        "",
+        "نوع الطلب: استعلام توفر شاليه ميني",
+        form.date     ? `التاريخ: ${dateAr}`                        : null,
+        form.checkIn  ? `وقت الوصول المتوقع: ${form.checkIn}`        : null,
+        hours         ? `عدد الساعات المتوقع: ${hours} ساعة`         : null,
+        priceLine,
+        form.fullName ? `الاسم: ${form.fullName}`                   : null,
+        form.phone    ? `رقم الجوال: ${form.phone}`                 : null,
+        form.notes    ? `ملاحظات: ${form.notes}`                    : null,
+        "",
+        "ملاحظة: يتم تحديد رقم الشاليه حسب التوفر عند الوصول، ولا يعتبر الطلب حجزًا مؤكدًا.",
+      ];
+      return miniLines
+        .filter((l): l is string => l !== null)
+        .join("\n")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
+    }
 
     const lines = [
       "مرحبًا، أرغب بحجز شاليه في أرياف زكي السالم للمياه الكبريتية.",
@@ -248,6 +283,7 @@ export default function BookingForm() {
     const payload = {
       // eslint-disable-next-line react-hooks/purity -- event handler, not render
       orderId:         `AR-${Date.now()}`,
+      requestType:     isMini ? "استعلام توفر شاليه ميني" : "حجز",
       fullName:        form.fullName,
       phone:           form.phone,
       chaletType:      chalet?.name ?? form.chaletId,
@@ -317,9 +353,13 @@ export default function BookingForm() {
           transition={{ duration: 0.55 }}
         >
           <div className="bg-white rounded-3xl shadow-[0_8px_50px_rgba(61,43,31,0.07)] border border-sand-100 p-7 lg:p-10">
-            <h3 className="font-semibold text-charcoal text-lg mb-1">أرسل طلب حجزك</h3>
+            <h3 className="font-semibold text-charcoal text-lg mb-1">
+              {isMini ? "استعلام توفر شاليه ميني" : "أرسل طلب حجزك"}
+            </h3>
             <p className="text-xs text-brown-400 mb-7">
-              جميع الحقول اختيارية — أرسل ما تعرفه والباقي نُكمله معاً.
+              {isMini
+                ? "أرسل بياناتك وسنؤكد لك التوفر عبر واتساب — الميني بالساعة ودون حجز مسبق."
+                : "جميع الحقول اختيارية — أرسل ما تعرفه والباقي نُكمله معاً."}
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -343,23 +383,45 @@ export default function BookingForm() {
                 )}
               </div>
 
-              {/* ٢. رقم الشاليه — يعتمد على النوع */}
+              {/* تنبيه الميني — استعلام توفر وليس حجزًا مؤكدًا */}
+              {isMini && (
+                <div className="px-5 py-4 bg-amber-50 border border-amber-200 rounded-2xl">
+                  <p className="text-sm font-semibold text-amber-800 mb-1.5">
+                    تنبيه: استعلام توفر — وليس حجزًا مؤكدًا
+                  </p>
+                  <p className="text-xs text-amber-700 leading-relaxed">
+                    شاليهات الميني تعمل بنظام التوفر الفوري، ولا يعتبر إرسال الطلب حجزًا مؤكدًا.
+                    أوقات الذروة من ٤ إلى ٩ مساءً عليها طلب عالٍ، والأولوية حسب التوفر وقت الوصول.
+                    للحجوزات المؤكدة مسبقًا نرشح الشاليهات الصغيرة أو الوسط.
+                  </p>
+                </div>
+              )}
+
+              {/* ٢. رقم الشاليه — يعتمد على النوع (الميني يُحدد عند الوصول) */}
               <div>
                 <label className={labelClass}>رقم الشاليه</label>
-                <select
-                  name="chaletNumber"
-                  value={form.chaletNumber}
-                  onChange={handleChange}
-                  disabled={!chalet}
-                  className={`${inputClass} disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  <option value="">
-                    {chalet ? "اختر رقم الشاليه" : "اختر نوع الشاليه أولاً"}
-                  </option>
-                  {chalet?.numbers.map((n) => (
-                    <option key={n} value={n}>{n}</option>
-                  ))}
-                </select>
+                {isMini ? (
+                  <div className={`${inputClass} bg-sand-50`}>
+                    <span className="text-brown-500 text-sm leading-relaxed">
+                      يتم تحديد رقم الشاليه عند الوصول حسب التوفر
+                    </span>
+                  </div>
+                ) : (
+                  <select
+                    name="chaletNumber"
+                    value={form.chaletNumber}
+                    onChange={handleChange}
+                    disabled={!chalet}
+                    className={`${inputClass} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    <option value="">
+                      {chalet ? "اختر رقم الشاليه" : "اختر نوع الشاليه أولاً"}
+                    </option>
+                    {chalet?.numbers.map((n) => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               {/* ٣. التاريخ */}
@@ -393,77 +455,118 @@ export default function BookingForm() {
                 </div>
               </div>
 
-              {/* ٤ + ٥. وقت الدخول والخروج */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={labelClass}>وقت الدخول</label>
-                  <input
-                    type="time"
-                    name="checkIn"
-                    value={form.checkIn}
-                    onChange={handleChange}
-                    onClick={openTimePicker}
-                    lang="en"
-                    dir="ltr"
-                    className={`${inputClass} cursor-pointer text-left`}
-                  />
+              {/* ٤ + ٥. الميني: وقت الوصول المتوقع + عدد الساعات المتوقع
+                        غير الميني: وقت الدخول والخروج */}
+              {isMini ? (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelClass}>وقت الوصول المتوقع</label>
+                    <input
+                      type="time"
+                      name="checkIn"
+                      value={form.checkIn}
+                      onChange={handleChange}
+                      onClick={openTimePicker}
+                      lang="en"
+                      dir="ltr"
+                      className={`${inputClass} cursor-pointer text-left`}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>عدد الساعات المتوقع</label>
+                    <select
+                      name="expectedHours"
+                      value={form.expectedHours}
+                      onChange={handleChange}
+                      className={inputClass}
+                    >
+                      <option value="">اختر عدد الساعات</option>
+                      {MINI_HOUR_OPTIONS.map((n) => (
+                        <option key={n} value={n}>{`${n} ساعة`}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label className={labelClass}>وقت الخروج</label>
-                  <input
-                    type="time"
-                    name="checkOut"
-                    value={form.checkOut}
-                    onChange={handleChange}
-                    onClick={openTimePicker}
-                    lang="en"
-                    dir="ltr"
-                    className={`${inputClass} cursor-pointer text-left`}
-                  />
-                </div>
-              </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelClass}>وقت الدخول</label>
+                      <input
+                        type="time"
+                        name="checkIn"
+                        value={form.checkIn}
+                        onChange={handleChange}
+                        onClick={openTimePicker}
+                        lang="en"
+                        dir="ltr"
+                        className={`${inputClass} cursor-pointer text-left`}
+                      />
+                    </div>
+                    <div>
+                      <label className={labelClass}>وقت الخروج</label>
+                      <input
+                        type="time"
+                        name="checkOut"
+                        value={form.checkOut}
+                        onChange={handleChange}
+                        onClick={openTimePicker}
+                        lang="en"
+                        dir="ltr"
+                        className={`${inputClass} cursor-pointer text-left`}
+                      />
+                    </div>
+                  </div>
 
-              {/* ٦. عدد الساعات — تلقائي */}
-              <div>
-                <label className={labelClass}>عدد الساعات</label>
-                <div className={`${inputClass} bg-sand-50`}>
-                  <span className={hours ? "text-charcoal" : "text-brown-400/50"}>
-                    {hours ? `${hours} ساعة` : "يُحسب تلقائيًا من وقت الدخول والخروج"}
-                  </span>
-                </div>
-                {overnight && (
-                  <p className="text-xs text-amber-700 mt-1.5">الخروج في اليوم التالي</p>
-                )}
-              </div>
+                  {/* ٦. عدد الساعات — تلقائي */}
+                  <div>
+                    <label className={labelClass}>عدد الساعات</label>
+                    <div className={`${inputClass} bg-sand-50`}>
+                      <span className={hours ? "text-charcoal" : "text-brown-400/50"}>
+                        {hours ? `${hours} ساعة` : "يُحسب تلقائيًا من وقت الدخول والخروج"}
+                      </span>
+                    </div>
+                    {overnight && (
+                      <p className="text-xs text-amber-700 mt-1.5">الخروج في اليوم التالي</p>
+                    )}
+                  </div>
 
-              {/* ٧. مدة الحجز */}
-              <div>
-                <label className={labelClass}>مدة الحجز</label>
-                {isMini ? (
+                  {/* ٧. مدة الحجز */}
+                  <div>
+                    <label className={labelClass}>مدة الحجز</label>
+                    <select
+                      name="period"
+                      value={form.period}
+                      onChange={handleChange}
+                      disabled={!chalet}
+                      className={`${inputClass} disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      <option value="">
+                        {chalet ? "اختر المدة" : "اختر نوع الشاليه أولاً"}
+                      </option>
+                      {chalet?.periods.map((p) => (
+                        <option key={p.label} value={p.label}>
+                          {p.label} — {p.price.toLocaleString("en-US")} ريال
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              )}
+
+              {/* السعر التقديري للميني */}
+              {isMini && (
+                <div>
+                  <label className={labelClass}>السعر التقديري</label>
                   <div className={`${inputClass} bg-sand-50`}>
-                    <span className="text-brown-500 text-xs leading-relaxed">
-                      تُحتسب مدة الميني من وقت الدخول والخروج — {chalet?.durationNote}
+                    <span className={estimatedPrice !== null ? "text-charcoal" : "text-brown-400/50"}>
+                      {estimatedPrice !== null
+                        ? `${estimatedPrice.toLocaleString("en-US")} ريال`
+                        : "٩٩ ريال للساعة الأولى، وكل ساعة إضافية ٥٠ ريال"}
                     </span>
                   </div>
-                ) : (
-                  <select
-                    name="period"
-                    value={form.period}
-                    onChange={handleChange}
-                    disabled={!chalet}
-                    className={`${inputClass} disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    <option value="">
-                      {chalet ? "اختر المدة" : "اختر نوع الشاليه أولاً"}
-                    </option>
-                    {chalet?.periods.map((p) => (
-                      <option key={p.label} value={p.label}>
-                        {p.label} — {p.price.toLocaleString("en-US")} ريال
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* ٨. عدد الأشخاص */}
               <div>
@@ -531,21 +634,35 @@ export default function BookingForm() {
               {showSummary && (
                 <div className="px-5 py-4 bg-sand-50 border-2 border-gold-300/50 rounded-2xl">
                   <p className="font-serif text-base text-charcoal font-semibold mb-3">
-                    ملخص الحجز
+                    {isMini ? "ملخص الاستعلام" : "ملخص الحجز"}
                   </p>
                   <dl className="space-y-1.5 text-sm">
                     <SummaryRow label="نوع الشاليه" value={chalet?.name ?? "—"} />
-                    <SummaryRow label="رقم الشاليه" value={form.chaletNumber} />
-                    <SummaryRow label="الدخول" value={form.checkIn} ltr />
-                    <SummaryRow label="الخروج" value={form.checkOut} ltr />
-                    <SummaryRow
-                      label="عدد الساعات"
-                      value={
-                        hours
-                          ? `${hours} ساعة${overnight ? " (الخروج في اليوم التالي)" : ""}`
-                          : "—"
-                      }
-                    />
+                    {isMini ? (
+                      <>
+                        <SummaryRow label="رقم الشاليه" value="يُحدد عند الوصول حسب التوفر" />
+                        <SummaryRow label="التاريخ" value={formatDate(form.date)} />
+                        <SummaryRow label="وقت الوصول المتوقع" value={form.checkIn} ltr />
+                        <SummaryRow
+                          label="عدد الساعات المتوقع"
+                          value={hours ? `${hours} ساعة` : "—"}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <SummaryRow label="رقم الشاليه" value={form.chaletNumber} />
+                        <SummaryRow label="الدخول" value={form.checkIn} ltr />
+                        <SummaryRow label="الخروج" value={form.checkOut} ltr />
+                        <SummaryRow
+                          label="عدد الساعات"
+                          value={
+                            hours
+                              ? `${hours} ساعة${overnight ? " (الخروج في اليوم التالي)" : ""}`
+                              : "—"
+                          }
+                        />
+                      </>
+                    )}
                     <SummaryRow
                       label="السعر التقديري"
                       value={
@@ -557,7 +674,9 @@ export default function BookingForm() {
                     />
                   </dl>
                   <p className="text-xs text-brown-400/70 mt-3 leading-relaxed">
-                    ملاحظة: يتم تأكيد التوفر النهائي عبر واتساب.
+                    {isMini
+                      ? "ملاحظة: يتم تحديد رقم الشاليه حسب التوفر عند الوصول، ولا يعتبر الطلب حجزًا مؤكدًا."
+                      : "ملاحظة: يتم تأكيد التوفر النهائي عبر واتساب."}
                   </p>
                 </div>
               )}
@@ -579,13 +698,15 @@ export default function BookingForm() {
                 ) : (
                   <>
                     <WhatsAppIcon className="w-[18px] h-[18px] text-white" />
-                    أرسل طلب الحجز عبر واتساب
+                    {isMini ? "أرسل استعلام التوفر عبر واتساب" : "أرسل طلب الحجز عبر واتساب"}
                   </>
                 )}
               </button>
 
               <p className="text-center text-xs text-brown-400/70 leading-relaxed pt-1 max-w-xs mx-auto">
-                بعد الضغط على الزر سيتم فتح واتساب برسالة جاهزة، فضلاً اضغط إرسال داخل واتساب لإتمام طلب الحجز.
+                {isMini
+                  ? "بعد الضغط على الزر سيتم فتح واتساب برسالة جاهزة، فضلاً اضغط إرسال داخل واتساب لإتمام استعلام التوفر."
+                  : "بعد الضغط على الزر سيتم فتح واتساب برسالة جاهزة، فضلاً اضغط إرسال داخل واتساب لإتمام طلب الحجز."}
               </p>
 
             </form>
