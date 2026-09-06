@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ariaf Resort Website & Booking Experience
 
-## Getting Started
+A responsive Next.js website and booking experience for a sulfur-water chalet/resort business in Saudi Arabia.
 
-First, run the development server:
+This project was developed iteratively around real customer and operational requirements, including chalet presentation, booking-time logic, pricing summaries, mobile usability, image galleries, and WhatsApp contact routing.
+
+## My Role
+
+I translated business requirements into product changes and implemented them using an AI-assisted development workflow with Claude and ChatGPT. My work included requirement definition, testing, debugging, UI iteration, booking-flow decisions, and production updates.
+
+## Key Features
+
+- Responsive chalet/resort presentation website.
+- Mobile-first booking experience.
+- Chalet image carousels and galleries.
+- Booking date/time selection and usability improvements.
+- Booking summary with estimated pricing.
+- Business-specific availability rules for different chalet types.
+- WhatsApp handoff and site-wide contact routing.
+- Iterative production fixes based on real operational feedback.
+
+## Selected Engineering Work
+
+The Git history shows continuous iteration on real product requirements, including:
+
+- chalet image carousel and booking-flow improvements
+- mobile hero spacing fixes
+- booking-time input usability
+- chalet-specific booking logic
+- booking summary and estimated price
+- mini-chalet availability policy
+- site-wide WhatsApp contact-number migration
+
+## Tech Stack
+
+- Next.js 16
+- React 19
+- TypeScript
+- Tailwind CSS
+- Framer Motion
+- Sharp
+- Git / GitHub
+
+## What This Project Demonstrates
+
+- Translating non-technical business requirements into application behavior.
+- Iterative frontend development and debugging.
+- Responsive/mobile UX work.
+- Maintaining a live customer-facing website.
+- Using Git-based development and AI-assisted coding responsibly.
+
+## Development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Production build:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build
+npm start
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Ali Alteibe**  
+AI Automation & Integration Developer  
+Dammam, Saudi Arabia  
+LinkedIn: https://www.linkedin.com/in/ali-alteybe-49494533b
