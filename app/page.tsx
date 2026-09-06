@@ -11,6 +11,7 @@ import BookingForm     from "@/components/BookingForm";
 import FAQ             from "@/components/FAQ";
 import Footer          from "@/components/Footer";
 import FloatingWhatsApp from "@/components/FloatingWhatsApp";
+import { PHONE_E164 } from "@/lib/site";
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -19,7 +20,7 @@ const jsonLd = {
   description:
     "شاليهات خاصة وسط نخيل الأحساء مع تجربة استرخاء بمياه كبريتية طبيعية، مناسبة للعائلات.",
   url: "https://ariafzaki.com",
-  telephone: "+966567717401",
+  telephone: PHONE_E164,
   priceRange: "$$",
   address: {
     "@type": "PostalAddress",
@@ -63,7 +64,7 @@ const jsonLd = {
   },
   contactPoint: {
     "@type": "ContactPoint",
-    telephone: "+966567717401",
+    telephone: PHONE_E164,
     contactType: "reservations",
     availableLanguage: "Arabic",
     contactOption: "TollFree",

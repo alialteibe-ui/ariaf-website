@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { DISPLAY_PHONE } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "سياسة الخصوصية | أرياف زكي السالم للمياه الكبريتية",
@@ -76,7 +77,7 @@ export default function PrivacyPage() {
           <Section title="التواصل عبر واتساب">
             جميع محادثات الحجز تتم عبر تطبيق واتساب. بمجرد تواصلك معنا فأنت توافق على تبادل المعلومات
             الضرورية لإتمام الحجز عبر هذه القناة. يمكنك طلب حذف بياناتك في أي وقت عبر إرسال طلب على
-            الرقم +966567717401.
+            الرقم {DISPLAY_PHONE}.
           </Section>
 
           <Section title="التحديثات">

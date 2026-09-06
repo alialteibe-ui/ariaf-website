@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { WHATSAPP_URL, WHATSAPP_NUMBER, WHATSAPP_GREETING } from "@/lib/site";
+import { WHATSAPP_URL, DISPLAY_PHONE, WHATSAPP_GREETING } from "@/lib/site";
 import {
   WhatsAppIcon,
   InstagramIcon,
@@ -120,7 +120,7 @@ export default function Footer() {
                   href={WA_HREF}
                   className="text-sm text-brown-400 hover:text-gold-500 transition-colors"
                 >
-                  +{WHATSAPP_NUMBER}
+                  {DISPLAY_PHONE}
                 </a>
               </ContactRow>
               <ContactRow Icon={ClockIcon} label="ساعات الرد">

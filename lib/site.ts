@@ -8,8 +8,15 @@
 
 // ─── Contact ──────────────────────────────────────────────────────────────────
 
-export const WHATSAPP_NUMBER = "966567717401";
+export const WHATSAPP_NUMBER = "966562322330";
 export const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
+
+/** Local format shown to customers anywhere the number is visible on the site */
+export const DISPLAY_PHONE = "0562322330";
+/** International E.164 form — used in structured data (JSON-LD) */
+export const PHONE_E164 = "+966562322330";
+/** href for any click-to-call link */
+export const TEL_HREF = `tel:${PHONE_E164}`;
 
 /** Pre-filled greeting for direct links (no form) */
 export const WHATSAPP_GREETING = encodeURIComponent(

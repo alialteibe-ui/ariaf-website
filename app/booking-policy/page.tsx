@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { WHATSAPP_URL, DISPLAY_PHONE } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "سياسة الحجز | أرياف زكي السالم للمياه الكبريتية",
@@ -92,10 +93,10 @@ export default function BookingPolicyPage() {
             لأي استفسار تواصل معنا على واتساب:
             <br /><br />
             <a
-              href="https://wa.me/966567717401"
+              href={WHATSAPP_URL}
               className="text-gold-500 font-semibold hover:underline"
             >
-              +966567717401
+              {DISPLAY_PHONE}
             </a>
             <br />
             ساعات الرد: ٨ صباحاً — ١٠ مساءً يومياً.
