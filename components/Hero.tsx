@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect } from "react";
+import { useNationalDayOfferActive } from "@/lib/offer";
 import {
   motion,
   useMotionValue,
@@ -35,6 +36,11 @@ export default function Hero() {
     window.addEventListener("mousemove", onMove);
     return () => window.removeEventListener("mousemove", onMove);
   }, [mx, my, prefersReducedMotion]);
+
+  // While the National Day offer runs, its card floats over this slot on
+  // mobile. Hiding the badge with `invisible` (not `hidden`) keeps its space
+  // in the layout, so the Hero does not move by a single pixel.
+  const offerActive = useNationalDayOfferActive();
 
   const scrollToBooking = () => {
     document.querySelector("#booking")?.scrollIntoView({ behavior: "smooth" });
@@ -88,7 +94,9 @@ export default function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="liquid-glass inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-2 mb-8"
+            className={`liquid-glass inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-2 mb-8 ${
+              offerActive ? "invisible sm:visible" : ""
+            }`}
           >
             <span className="w-2 h-2 rounded-full bg-gold-400 animate-pulse" />
             <span className="text-sm font-medium text-white/90">
