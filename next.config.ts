@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
     localPatterns: [
       { pathname: "/image/chalets/**" },
       { pathname: "/image/farm/**" },
+      { pathname: "/image/offers/**" },
     ],
   },
 };

@@ -11,6 +11,7 @@ import BookingForm     from "@/components/BookingForm";
 import FAQ             from "@/components/FAQ";
 import Footer          from "@/components/Footer";
 import FloatingWhatsApp from "@/components/FloatingWhatsApp";
+import NationalDayOffer from "@/components/NationalDayOffer";
 import { PHONE_E164 } from "@/lib/site";
 
 const jsonLd = {
@@ -83,6 +84,7 @@ export default function Home() {
       <Navbar />
       <main>
         <Hero />
+        <NationalDayOffer />
         <Experience />
         <VideoSection />
         <Gallery />

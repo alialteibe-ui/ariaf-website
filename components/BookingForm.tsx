@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { WHATSAPP_URL } from "@/lib/site";
 import { CHALETS, getChaletById, estimateMiniPrice } from "@/lib/chalets";
+import { NATIONAL_DAY_OFFER, useNationalDayOfferActive } from "@/lib/offer";
 import { WhatsAppIcon, CalendarIcon } from "@/components/icons";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -105,6 +106,11 @@ export default function BookingForm() {
   const [guestsError, setGuestsError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const dateRef = useRef<HTMLInputElement>(null);
+
+  // Marketing note only — never affects the price estimate below.
+  // Client-only by design: the page is prerendered, so a render-time check
+  // would freeze the offer window into the static HTML.
+  const offerActive = useNationalDayOfferActive();
 
   // location navigation means the page may be restored from bfcache when the
   // customer comes back from WhatsApp — re-enable the button then
@@ -223,6 +229,7 @@ export default function BookingForm() {
         "مرحبًا، أرغب بالاستعلام عن توفر شاليه ميني في أرياف زكي السالم للمياه الكبريتية.",
         "",
         "نوع الطلب: استعلام توفر شاليه ميني",
+        offerActive   ? NATIONAL_DAY_OFFER.bookingNote              : null,
         form.date     ? `التاريخ: ${dateAr}`                        : null,
         form.checkIn  ? `وقت الوصول المتوقع: ${form.checkIn}`        : null,
         hours         ? `عدد الساعات المتوقع: ${hours} ساعة`         : null,
@@ -243,6 +250,7 @@ export default function BookingForm() {
     const lines = [
       "مرحبًا، أرغب بحجز شاليه في أرياف زكي السالم للمياه الكبريتية.",
       "",
+      offerActive       ? NATIONAL_DAY_OFFER.bookingNote         : null,
       form.fullName     ? `الاسم: ${form.fullName}`              : null,
       form.phone        ? `رقم الجوال: ${form.phone}`            : null,
       chalet            ? `نوع الشاليه: ${chalet.name}`          : null,
@@ -673,6 +681,15 @@ export default function BookingForm() {
                       strong
                     />
                   </dl>
+
+                  {/* Marketing note only — the estimate above is unchanged. */}
+                  {offerActive && (
+                    <p className="flex items-center gap-2 text-xs font-semibold text-palm-600 bg-palm-600/8 border border-palm-500/20 rounded-xl px-3 py-2.5 mt-3 leading-relaxed">
+                      <span className="w-1.5 h-1.5 rounded-full bg-palm-500 flex-shrink-0" />
+                      {NATIONAL_DAY_OFFER.bookingNote}
+                    </p>
+                  )}
+
                   <p className="text-xs text-brown-400/70 mt-3 leading-relaxed">
                     {isMini
                       ? "ملاحظة: يتم تحديد رقم الشاليه حسب التوفر عند الوصول، ولا يعتبر الطلب حجزًا مؤكدًا."
