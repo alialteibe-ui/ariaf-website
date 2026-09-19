@@ -64,18 +64,27 @@ export default function NationalDayOffer() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="w-full max-w-[300px] sm:max-w-[360px] lg:max-w-[420px] mx-auto"
         >
-          <div className="relative rounded-3xl overflow-hidden shadow-[0_4px_28px_rgba(61,43,31,0.10)] ring-1 ring-gold-300/25">
-            <Image
-              src={NATIONAL_DAY_OFFER.image}
-              alt={NATIONAL_DAY_OFFER.imageAlt}
-              width={NATIONAL_DAY_OFFER.imageWidth}
-              height={NATIONAL_DAY_OFFER.imageHeight}
-              sizes="(max-width: 640px) 300px, (max-width: 1024px) 360px, 420px"
-              className="w-full h-auto"
-              priority={false}
-            />
+          {/*
+            On mobile the -mx-6 cancels the section's px-6 so this block spans the
+            full viewport, and px-3 then insets it by 12px a side — an effective
+            width of calc(100vw - 24px). From sm up it returns to normal flow and
+            is capped at a comfortable poster width so it never dominates desktop.
+          */}
+          <div className="-mx-6 px-3 sm:mx-0 sm:px-0">
+            <div className="mx-auto w-full max-w-[430px] sm:max-w-[400px] lg:max-w-[440px]">
+              <div className="relative rounded-3xl overflow-hidden shadow-[0_4px_28px_rgba(61,43,31,0.10)] ring-1 ring-gold-300/25">
+                <Image
+                  src={NATIONAL_DAY_OFFER.image}
+                  alt={NATIONAL_DAY_OFFER.imageAlt}
+                  width={NATIONAL_DAY_OFFER.imageWidth}
+                  height={NATIONAL_DAY_OFFER.imageHeight}
+                  sizes="(max-width: 640px) calc(100vw - 24px), (max-width: 1024px) 400px, 440px"
+                  className="w-full h-auto"
+                  priority={false}
+                />
+              </div>
+            </div>
           </div>
         </motion.div>
 

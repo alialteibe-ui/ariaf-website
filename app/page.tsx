@@ -12,6 +12,7 @@ import FAQ             from "@/components/FAQ";
 import Footer          from "@/components/Footer";
 import FloatingWhatsApp from "@/components/FloatingWhatsApp";
 import NationalDayOffer from "@/components/NationalDayOffer";
+import NationalDayBanner from "@/components/NationalDayBanner";
 import { PHONE_E164 } from "@/lib/site";
 
 const jsonLd = {
@@ -96,6 +97,7 @@ export default function Home() {
       </main>
       <Footer />
       <FloatingWhatsApp />
+      <NationalDayBanner />
     </>
   );
 }
